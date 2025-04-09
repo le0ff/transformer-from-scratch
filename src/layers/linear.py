@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 import numpy as np
 
-from .base import BaseLayer
+from src.layers.base import BaseLayer
 
 
 class Linear(BaseLayer):
