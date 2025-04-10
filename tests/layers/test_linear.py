@@ -29,7 +29,7 @@ def sample_input_3d(layer_config: dict[str, int]) -> np.ndarray:
 
 
 def test_linear_init(linear_layer: Linear, layer_config: dict[str, int]) -> None:
-    """Tests layer initialiaztion: dimensions and default mode."""
+    """Tests initialization of linear layer: shape, dimensions ."""
     input_dim = layer_config["input_dim"]
     output_dim = layer_config["output_dim"]
 
@@ -132,4 +132,53 @@ def test_linear_forward_computation(
         rtol=1e-6,
         atol=1e-6,
         err_msg="Forward pass computation mismatch",
+    )
+
+
+def test_linears_same_seed(layer_config: dict[str, int]) -> None:
+    """Tests initialization of two linear layers with same seed."""
+    input_dim = layer_config["input_dim"]
+    output_dim = layer_config["output_dim"]
+
+    seed = 42
+
+    layer1 = Linear(input_dim, output_dim, seed=seed)
+    layer2 = Linear(input_dim, output_dim, seed=seed)
+
+    # Check if weights are initialized equally
+    assert np.array_equal(layer1.W, layer2.W), "Weights W should be equal"
+    assert np.array_equal(layer1.b, layer2.b), (
+        "Bias b should be equal, as it is initialized to zero"
+    )
+
+
+def test_linears_diff_seed(layer_config: dict[str, int]) -> None:
+    """Tests initialization of two linear layers with different seed."""
+    input_dim = layer_config["input_dim"]
+    output_dim = layer_config["output_dim"]
+
+    seed = 42
+
+    layer1 = Linear(input_dim, output_dim, seed=seed)
+    layer2 = Linear(input_dim, output_dim, seed=seed + 1)
+
+    # Check if weights are initialized differently
+    assert not np.array_equal(layer1.W, layer2.W), "Weights W should be different"
+    assert np.array_equal(layer1.b, layer2.b), (
+        "Bias b should be equal, as it is initialized to zero"
+    )
+
+
+def test_linears_no_seed(layer_config: dict[str, int]) -> None:
+    """Tests initialization of two linear layers with no seed (should be different)."""
+    input_dim = layer_config["input_dim"]
+    output_dim = layer_config["output_dim"]
+
+    layer1 = Linear(input_dim, output_dim)
+    layer2 = Linear(input_dim, output_dim)
+
+    # Check if weights and biases are initialized differently
+    assert not np.array_equal(layer1.W, layer2.W), "Weights W should be different"
+    assert np.array_equal(layer1.b, layer2.b), (
+        "Bias b should be equal, as it is initialized to zero"
     )

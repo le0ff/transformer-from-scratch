@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -10,20 +10,35 @@ class Linear(BaseLayer):
     Standard fully connected linear layer.
     """
 
-    def __init__(self, input_dim: int, output_dim: int) -> None:
+    def __init__(
+        self, input_dim: int, output_dim: int, seed: Optional[int] = None
+    ) -> None:
         """
         Initializes Linear layer.
 
         Parameters:
             input_dim (int): Number of input features.
             output_dim (int): Number of output features.
+            seed (Optional[int]): Seed for weight initialization.
         """
         super().__init__()
+
+        if input_dim <= 0 or output_dim <= 0:
+            raise ValueError("Input and output dimensions must be positive integers.")
+
+        if seed is None:
+            rng = np.random.default_rng()
+        else:
+            if not isinstance(seed, int):
+                raise ValueError("Seed must be an integer.")
+            # Random number generator with a seed for reproducibility
+            rng = np.random.default_rng(seed)
+
         self.input_dim = input_dim
         self.output_dim = output_dim
 
         # He initialization for weights
-        self.W = np.random.randn(input_dim, output_dim) * np.sqrt(2.0 / self.input_dim)
+        self.W = rng.standard_normal((input_dim, output_dim)) * np.sqrt(2.0 / input_dim)
         self.b = np.zeros(output_dim)
 
         # Cache for backward pass
@@ -65,3 +80,23 @@ class Linear(BaseLayer):
             self.W = params["W"]
         if "b" in params:
             self.b = params["b"]
+
+    # def backward(self, grad_output: np.ndarray) -> np.ndarray:
+    #     """
+    #     Computes gradients w.r.t. inputs and parameters.
+
+    #     Parameters:
+    #         grad_outputs (np.ndarray): Gradient of the loss w.r.t. the output of this layer.
+
+    #     Returns:
+    #         np.ndarray: Gradient of the loss w.r.t. the input of this layer.
+    #     """
+    #     if self._input_cache is None:
+    #         raise ValueError("No input cache found. Forward pass must be called first.")
+
+    #     # Compute gradients w.r.t. parameters (weights and bias)
+    #     self.dW = self._input_cache.T @ grad_output
+    #     self.db = np.sum(grad_output, axis=0)
+    #     # Gradient w.r.t. input
+    #     grad_inputs = grad_output @ self.W.T
+    #     return grad_inputs
