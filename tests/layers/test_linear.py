@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from numpy import ndarray
 
 from src.layers.linear import Linear
 
@@ -10,24 +11,24 @@ def layer_config() -> dict[str, int]:
 
 
 @pytest.fixture
-def linear_layer(layer_config):
+def linear_layer(layer_config: dict[str, int]) -> Linear:
     return Linear(layer_config["input_dim"], layer_config["output_dim"])
 
 
 @pytest.fixture
-def sample_input_2d(layer_config) -> np.ndarray:
+def sample_input_2d(layer_config: dict[str, int]) -> np.ndarray:
     batch_size = 4
     return np.random.randn(batch_size, layer_config["input_dim"])
 
 
 @pytest.fixture
-def sample_input_3d(layer_config) -> np.ndarray:
+def sample_input_3d(layer_config: dict[str, int]) -> np.ndarray:
     batch_size = 4
     seq_len = 8
     return np.random.randn(batch_size, seq_len, layer_config["input_dim"])
 
 
-def test_linear_init(linear_layer, layer_config):
+def test_linear_init(linear_layer: Linear, layer_config: dict[str, int]) -> None:
     """Tests layer initialiaztion: dimensions and default mode."""
     input_dim = layer_config["input_dim"]
     output_dim = layer_config["output_dim"]
@@ -54,7 +55,7 @@ def test_linear_init(linear_layer, layer_config):
     assert np.all(linear_layer.b == 0), "Bias b should be initialized to zero"
 
 
-def test_linear_get_parameters(linear_layer):
+def test_linear_get_parameters(linear_layer: Linear) -> None:
     """Tests get_parameters method."""
     params = linear_layer.get_parameters()
 
@@ -71,7 +72,9 @@ def test_linear_get_parameters(linear_layer):
     assert len(params) == 2, "Expected 2 parameters (W and b)"
 
 
-def test_linear_forward_shape_2d(linear_layer, sample_input_2d):
+def test_linear_forward_shape_2d(
+    linear_layer: Linear, sample_input_2d: ndarray
+) -> None:
     """Tests forward method with 2D input."""
     output = linear_layer(sample_input_2d)
     batch_size = sample_input_2d.shape[0]
@@ -82,7 +85,9 @@ def test_linear_forward_shape_2d(linear_layer, sample_input_2d):
     )
 
 
-def test_linear_forward_shape_3d(linear_layer, sample_input_3d):
+def test_linear_forward_shape_3d(
+    linear_layer: Linear, sample_input_3d: ndarray
+) -> None:
     """Tests forward method with 3D input."""
     output = linear_layer(sample_input_3d)
     batch_size, seq_len = sample_input_3d.shape[0], sample_input_3d.shape[1]
@@ -93,7 +98,9 @@ def test_linear_forward_shape_3d(linear_layer, sample_input_3d):
     )
 
 
-def test_linear_forward_computation(linear_layer, layer_config):
+def test_linear_forward_computation(
+    linear_layer: Linear, layer_config: dict[str, int]
+) -> None:
     """Tests forward pass computation with set weights and input."""
     input_dim = layer_config["input_dim"]
     output_dim = layer_config["output_dim"]
