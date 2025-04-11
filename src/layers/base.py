@@ -1,61 +1,79 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-import numpy as np
+from numpy import ndarray
 
 
 class BaseLayer(ABC):
-    """
-    Abstract base class for all layers.
-    """
+    """Abstract base class for all layers."""
 
     def __init__(self):
         self.training = True
 
     def train(self) -> None:
-        """
-        Set layer to training mode.
-        """
+        """Set layer to training mode."""
         self.training = True
 
     def eval(self) -> None:
-        """
-        Set layer to evaluation mode.
-        """
+        """Set layer to evaluation mode."""
         self.training = False
 
     @abstractmethod
-    def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
+    def forward(self, x: ndarray, **kwargs: Any) -> ndarray:
         """
         Forward pass through the layer.
 
         Parameters:
-            x (np.ndarray): Input data.
+            x (ndarray): Input data.
             **kwargs (Any): Additional keyword arguments.
 
         Returns:
-            np.ndarray: Output data.
+            ndarray: Output data.
         """
         pass
 
-    def get_parameters(self) -> Dict[str, np.ndarray]:
+    def get_parameters(self) -> Dict[str, ndarray]:
         """
         Get the parameters of the layer.
+        Subclasses with parameters should override this method.
 
         Returns:
-            Dict[str, np.ndarray]: Dictionary of parameters.
+            Dict[str, ndarray]: Dictionary of parameters.
         """
         return {}
 
-    def __call__(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
+    def set_parameters(self, params: Dict[str, ndarray]) -> None:
+        """
+        Set the parameters of the layer.
+        Subclasses with parameters should override this method.
+
+        Parameters:
+            params (Dict[str, ndarray]): Dictionary of parameters {name: value}.
+        """
+        pass
+
+    def __call__(self, x: ndarray, **kwargs: Any) -> ndarray:
         """
         Call the forward method of the layer.
 
         Parameters:
-            x (np.ndarray): Input data.
+            x (ndarray): Input data.
             **kwargs (Any): Additional keyword arguments.
 
         Returns:
-            np.ndarray: Output data.
+            ndarray: Output data.
         """
         return self.forward(x, **kwargs)
+
+    # @abstractmethod
+    # def backward(self, output_grad: ndarray) -> ndarray:
+    #     """
+    #     Backward pass through the layer.
+
+    #     Parameters:
+    #         output_grad (ndarray): Gradient of the loss with respect to the output.
+
+    #     Returns:
+    #         ndarray: Gradient of the loss with respect to the input.
+    #     """
+    #     pass
