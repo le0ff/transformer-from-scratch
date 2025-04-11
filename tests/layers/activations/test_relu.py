@@ -20,6 +20,14 @@ def sample_input_mixed_signs() -> ndarray:
 
 
 @pytest.fixture
+def sample_input_mixed_signs_expected() -> ndarray:
+    """Creates expected output data for the sample input."""
+    # Shape: (batch_size, features)
+    data = np.array([[1.0, 0.0, 0.0, 3.5, 0.0], [0.0, 6.0, 0.0, 0.0, 10.0]])
+    return data
+
+
+@pytest.fixture
 def sample_input_3d() -> np.ndarray:
     """Creates sample 3D input data."""
     # Shape: (batch_size, seq_len, features)
@@ -51,11 +59,13 @@ def test_relu_forward_shape(
 
 
 def test_relu_forward_computation(
-    relu_layer: ReLU, sample_input_mixed_signs: ndarray
+    relu_layer: ReLU,
+    sample_input_mixed_signs: ndarray,
+    sample_input_mixed_signs_expected: ndarray,
 ) -> None:
     """Tests the ReLU computation max(0, x)."""
     x = sample_input_mixed_signs
-    expected_output = np.array([[1.0, 0.0, 0.0, 3.5, 0.0], [0.0, 6.0, 0.0, 0.0, 10.0]])
+    expected_output = sample_input_mixed_signs_expected
     actual_output = relu_layer(x)
 
     # ReLU computation should be exact
