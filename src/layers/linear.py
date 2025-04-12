@@ -77,8 +77,18 @@ class Linear(BaseLayer):
             params (Dict[str, np.ndarray]): Dictionary of parameters.
         """
         if "W" in params:
+            if params["W"].shape != (self.input_dim, self.output_dim):
+                raise ValueError(
+                    f"Expected W shape {(self.input_dim, self.output_dim)}, "
+                    f"but got {params['W'].shape}"
+                )
             self.W = params["W"]
         if "b" in params:
+            if params["b"].shape != (self.output_dim,):
+                raise ValueError(
+                    f"Expected b shape {(self.output_dim,)}, "
+                    f"but got {params['b'].shape}"
+                )
             self.b = params["b"]
 
     # def backward(self, grad_output: np.ndarray) -> np.ndarray:
