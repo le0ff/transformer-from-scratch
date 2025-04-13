@@ -20,7 +20,7 @@ class Dropout(BaseLayer):
 
         Parameters:
             rate (float): The dropout rate, i.e., the probability of setting
-                          an element to zero. Must be between 0 and 1.
+                          an element to zero. Must be in [0.0, 1.0).
             seed (Optional[int]): Seed for the random number generator used
                                   for creating dropout masks. Ensures reproducibility
                                   during training if set.
@@ -28,7 +28,7 @@ class Dropout(BaseLayer):
         super().__init__()
 
         if not isinstance(rate, (int, float)) or not (0.0 <= rate < 1.0):
-            raise ValueError("Dropout rate must be a float between 0 and 1.")
+            raise ValueError("Dropout rate must be a float in [0.0, 1.0).")
 
         self.rate = float(rate)
         if seed is None:
