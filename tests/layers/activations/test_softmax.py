@@ -16,7 +16,12 @@ def big_input() -> np.ndarray:
 
 @pytest.fixture
 def small_input_2d() -> np.ndarray:
-    return np.array([[2.0, 1.0, 1.0], [1.0, 2.0, 1.0]])
+    return np.array([[2.0, 1.0, 1.0], [2.0, 1.0, 1.0], [2.0, 1.0, 1.0]])
+
+
+@pytest.fixture
+def small_input_2d_mask() -> np.ndarray:
+    return np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0]])
 
 
 @pytest.fixture
@@ -70,4 +75,26 @@ def test_2d_input(softmax_activation: Softmax, small_input_2d: np.ndarray) -> No
     )
     assert np.allclose(np.sum(output, axis=-1), 1.0), (
         "Softmax output does not sum to 1 along the last axis."
+    )
+
+
+def test_causal_mask(
+    softmax_activation: Softmax,
+    small_input_2d: np.ndarray,
+    small_input_2d_mask: np.ndarray,
+) -> None:
+    """
+    Test that the softmax function works with a causal mask.
+    """
+    output = softmax_activation(x=small_input_2d, causal_mask=small_input_2d_mask)
+    assert isinstance(output, np.ndarray), "Output is not a numpy array."
+    assert output.shape == small_input_2d.shape, (
+        "Softmax output shape does not match input shape."
+    )
+    assert np.allclose(np.sum(output, axis=-1), 1.0), (
+        "Softmax output does not sum to 1 along the last axis."
+    )
+    assert np.allclose(
+        output,
+        [[1.0, 0.0, 0.0], [0.731059, 0.268941, 0.0], [0.576117, 0.211942, 0.211942]],
     )
