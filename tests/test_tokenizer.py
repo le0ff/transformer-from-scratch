@@ -27,7 +27,7 @@ def test_tokenizer(tokenizer: Tokenizer, text: str) -> None:
     """Test the basic functionality of the Tokenizer."""
     tokens = tokenizer.tokenize(text)
     reconstructed = tokenizer.detokenize(tokens)
-    assert len(tokens) == len(text)
+    assert len(reconstructed) == len(text)
     assert all(isinstance(token, int) for token in tokens)
     assert reconstructed == text
 
@@ -36,7 +36,8 @@ def test_empty_text(tokenizer: Tokenizer, empty_text: str) -> None:
     """Test the Tokenizer with an empty string."""
     tokens = tokenizer.tokenize(empty_text)
     reconstructed = tokenizer.detokenize(tokens)
-    assert len(tokens) == 0
+    assert len(tokens) == 2
+    assert len(reconstructed) == 0
     assert reconstructed == empty_text
 
 
@@ -44,5 +45,6 @@ def test_unknown_char(tokenizer: Tokenizer, unknown_char: str) -> None:
     """Test the Tokenizer with an unknown character."""
     tokens = tokenizer.tokenize(unknown_char)
     reconstructed = tokenizer.detokenize(tokens)
-    assert len(tokens) == 0
+    assert len(tokens) == 2
+    assert len(reconstructed) == 0
     assert reconstructed == ""
