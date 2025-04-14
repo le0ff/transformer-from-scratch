@@ -48,3 +48,18 @@ def test_unknown_char(tokenizer: Tokenizer, unknown_char: str) -> None:
     assert len(tokens) == 2
     assert len(reconstructed) == 0
     assert reconstructed == ""
+
+
+def test_seq_length(tokenizer: Tokenizer, text: str, empty_text: str) -> None:
+    """Test the Tokenizer with a sequence length."""
+    seq_length = 10
+    tokens = tokenizer.tokenize(text, seq_length=seq_length)
+    assert len(tokens) == seq_length
+    assert all(isinstance(token, int) for token in tokens)
+    assert tokens[0] == tokenizer.get_sos_token_id()
+    assert tokens[-1] == tokenizer.get_eos_token_id()
+    assert tokenizer.tokenize(empty_text, seq_length=seq_length) == [
+        tokenizer.get_sos_token_id()
+    ] + [tokenizer.get_pad_token_id()] * (seq_length - 2) + [
+        tokenizer.get_eos_token_id()
+    ]

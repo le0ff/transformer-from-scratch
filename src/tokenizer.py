@@ -15,20 +15,24 @@ class Tokenizer:
         self.char_to_id = {char: idx for idx, char in enumerate(self.vocab)}
         self.id_to_char = {idx: char for idx, char in enumerate(self.vocab)}
 
-    def tokenize(self, text: str, max_length: int = None) -> List[int]:
+    def tokenize(self, text: str, seq_length: int = None) -> List[int]:
         """
         Convert a text into a list of integers.
         """
-        tokens = (
-            [self.char_to_id[self.sos_token]]
-            + [self.char_to_id[char] for char in text if char in self.char_to_id]
-            + [self.char_to_id[self.eos_token]]
-        )
-        if max_length:
-            if len(tokens) > max_length:
-                tokens = tokens[:max_length]
+        tokens = [self.char_to_id[self.sos_token]] + [
+            self.char_to_id[char] for char in text if char in self.char_to_id
+        ]
+        if seq_length:
+            if len(tokens) > seq_length:
+                tokens = tokens[: (seq_length - 1)]
+                tokens.append(self.char_to_id[self.eos_token])
             else:
-                tokens += [self.char_to_id[self.pad_token]] * (max_length - len(tokens))
+                tokens += [self.char_to_id[self.pad_token]] * (
+                    (seq_length - 1) - len(tokens)
+                )
+                tokens.append(self.char_to_id[self.eos_token])
+        else:
+            tokens.append(self.char_to_id[self.eos_token])
 
         return tokens
 
