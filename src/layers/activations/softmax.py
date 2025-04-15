@@ -19,7 +19,7 @@ class Softmax(BaseLayer):
         self.axis = axis
         # Cache for backward pass
         self._input_cache = None
-        self._maske_cache = None
+        self._mask_cache = None
 
     def forward(self, x: np.ndarray, causal_mask: np.ndarray = None) -> np.ndarray:
         """
@@ -37,7 +37,7 @@ class Softmax(BaseLayer):
         if causal_mask is not None:
             if not x.shape == causal_mask.shape:
                 raise ValueError("Input and mask must have the same shape.")
-            self._maske_cache = causal_mask
+            self._mask_cache = causal_mask
             # Apply mask
             x = np.where(causal_mask, x, -1e9)
 
