@@ -8,7 +8,7 @@ class Softmax(BaseLayer):
     Numerically stable Softmax activation.
     """
 
-    def __init__(self, axis: int = -1) -> None:
+    def __init__(self, axis: int = -2) -> None:
         """
         Initialize the Softmax activation function.
 
@@ -46,6 +46,9 @@ class Softmax(BaseLayer):
         e_x = np.exp(shift_x)
         sum_e_x = np.sum(e_x, axis=self.axis, keepdims=True)
         return e_x / sum_e_x
+
+    def __call__(self, x: np.ndarray, causal_mask: np.ndarray = None) -> np.ndarray:
+        return self.forward(x, causal_mask)
 
     # def backward(self, grad_output: np.ndarray) -> np.ndarray:
     # """
