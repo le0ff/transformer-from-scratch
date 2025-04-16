@@ -64,7 +64,7 @@ class FeedForwardBlock(BaseLayer):
         self.dropout_layer = Dropout(dropout, seed=dropout_seed)
         self.linear2 = Linear(d_ff, d_model, use_bias=True, seed=linear2_seed)
 
-        # dictionary of layers with meaningful names for parameter handling & forward pass
+        # dictionary of layers with meaningful names for parameter handling & correct order for forward/backward pass
         self._layers = {
             "linear1": self.linear1,
             "relu": self.relu,
@@ -72,28 +72,28 @@ class FeedForwardBlock(BaseLayer):
             "linear2": self.linear2,
         }
 
-        def train(self) -> None:
-            """Set the layer to training mode."""
-            super().train()
-            for layer in self._layers:
-                layer.train()
+    def train(self) -> None:
+        """Set the layer to training mode."""
+        super().train()
+        for layer in self._layers:
+            layer.train()
 
-        def eval(self) -> None:
-            """Set the layer to evaluation mode."""
-            super().eval()
-            for layer in self._layers:
-                layer.eval()
+    def eval(self) -> None:
+        """Set the layer to evaluation mode."""
+        super().eval()
+        for layer in self._layers:
+            layer.eval()
 
-        def forward(self, x: ndarray, **kwargs: Any) -> ndarray:
-            """
-            Forward pass through the feedforward block by iterating through layers dictionary in order.
+    def forward(self, x: ndarray, **kwargs: Any) -> ndarray:
+        """
+        Forward pass through the feedforward block by iterating through layers dictionary in order.
 
-            Parameters:
-                x (ndarray): Input tensor of shape (batch_size, seq_len, d_model).
+        Parameters:
+            x (ndarray): Input tensor of shape (batch_size, seq_len, d_model).
 
-            Returns:
-                ndarray: Output tensor of shape (batch_size, seq_len, d_model).
-            """
-            for layer in self._layers.values():
-                x = layer.forward(x)
-            return x
+        Returns:
+            ndarray: Output tensor of shape (batch_size, seq_len, d_model).
+        """
+        for layer in self._layers.values():
+            x = layer.forward(x)
+        return x
