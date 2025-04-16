@@ -8,7 +8,7 @@ class Softmax(BaseLayer):
     Numerically stable Softmax activation.
     """
 
-    def __init__(self, axis: int = -2) -> None:
+    def __init__(self, axis: int = -1) -> None:
         """
         Initialize the Softmax activation function.
 
