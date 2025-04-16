@@ -1,3 +1,5 @@
+from typing import Dict, Optional
+
 import numpy as np
 from numpy import ndarray
 
@@ -8,7 +10,13 @@ from src.layers.linear import Linear
 
 
 class MultiHeadAttentionBlock(BaseLayer):
-    def __init__(self, d_model: int, n_heads: int, dropout_rate: float) -> None:
+    def __init__(
+        self,
+        d_model: int,
+        n_heads: int,
+        dropout_rate: float,
+        seed: Optional[int] = None,
+    ) -> None:
         """Initializes MultiHeadAttentionBlock layer.
         Parameters:
             d_model (int): Dimension of the model.
@@ -31,10 +39,10 @@ class MultiHeadAttentionBlock(BaseLayer):
         self.head_dim = d_model // n_heads
 
         # Initialize weights for query, key, value, and output
-        self.w_q = Linear(d_model, d_model, use_bias=False)
-        self.w_k = Linear(d_model, d_model, use_bias=False)
-        self.w_v = Linear(d_model, d_model, use_bias=False)
-        self.w_o = Linear(d_model, d_model, use_bias=False)
+        self.w_q = Linear(d_model, d_model, use_bias=False, seed=seed)
+        self.w_k = Linear(d_model, d_model, use_bias=False, seed=seed)
+        self.w_v = Linear(d_model, d_model, use_bias=False, seed=seed)
+        self.w_o = Linear(d_model, d_model, use_bias=False, seed=seed)
 
         self.dropout = Dropout(dropout_rate)
         self.softmax = Softmax()
@@ -69,7 +77,7 @@ class MultiHeadAttentionBlock(BaseLayer):
 
         # Compute attention scores
         attention_scores = softmax(
-            (query @ key.transpose(0, 2, 1)) / np.sqrt(d_k), mask
+            ((query @ key.transpose(0, 1, 3, 2)) / np.sqrt(d_k)), mask
         )
 
         # Apply dropout to attention scores
@@ -117,6 +125,55 @@ class MultiHeadAttentionBlock(BaseLayer):
 
         # Reshape back to (batch_size, seq_len, d_model)
         x = x.transpose(0, 2, 1, 3).reshape(
-            query.shape[0], query.shape[1], self.n_heads * self.head_dim
+            x.shape[0], x.shape[2], self.n_heads * self.head_dim
         )
         return self.w_o(x)
+
+    def __call__(
+        self, query: ndarray, key: ndarray, value: ndarray, mask: ndarray
+    ) -> ndarray:
+        return self.forward(query, key, value, mask)
+
+    def get_parameters(self) -> Dict[str, np.ndarray]:
+        """
+        Get the parameters of the layer.
+
+        Returns:
+            Dict[str, np.ndarray]: Dictionary of parameters.
+        """
+        params = {
+            "w_q": self.w_q.get_parameters()["W"],
+            "w_k": self.w_k.get_parameters()["W"],
+            "w_v": self.w_v.get_parameters()["W"],
+            "w_o": self.w_o.get_parameters()["W"],
+        }
+        return params
+
+    def set_parameters(self, params: Dict[str, np.ndarray]) -> None:
+        """
+        Set the parameters of the layer.
+
+        Parameters:
+            params (Dict[str, np.ndarray]): Dictionary of parameters.
+        """
+        # Check for valid length of the input dictionary
+        if len(params) != 4:
+            raise ValueError(
+                "Expected 4 parameters: 'w_q', 'w_k', 'w_v', and 'w_o'.\n "
+                "Got: " + str(list(params.keys()))
+            )
+
+        # Check the shapes of the parameters
+        for key in ["w_q", "w_k", "w_v", "w_o"]:
+            # Validate shape
+            if params[key].shape != (self.d_model, self.d_model):
+                raise ValueError(
+                    f"Expected {key} shape {(self.d_model, self.d_model)}, "
+                    f"but got {params[key].shape}"
+                )
+
+        # Set parameters
+        self.w_q.set_parameters({"W": params["w_q"]})
+        self.w_k.set_parameters({"W": params["w_k"]})
+        self.w_v.set_parameters({"W": params["w_v"]})
+        self.w_o.set_parameters({"W": params["w_o"]})
