@@ -22,14 +22,8 @@ class LayerNorm(BaseLayer):
         super().__init__()
         self.normalized_shape = normalized_shape
         self.eps = eps
-        self.affine = affine
-
-        if self.affine:
-            self.gamma = np.ones((normalized_shape,), dtype=np.float32)
-            self.beta = np.zeros((normalized_shape,), dtype=np.float32)
-        else:
-            self.gamma = None
-            self.beta = None
+        self.gamma = np.ones((normalized_shape,), dtype=np.float32)
+        self.beta = np.zeros((normalized_shape,), dtype=np.float32)
 
     def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
         """
@@ -43,10 +37,15 @@ class LayerNorm(BaseLayer):
         """
         mean = np.mean(x, axis=-1, keepdims=True)
         variance = np.var(x, axis=-1, keepdims=True)
-        x_norm = (x - mean) / np.sqrt(variance + self.eps)
+        # Introduced for backprop later
+        std = np.sqrt(variance + self.eps)
+        x_hat = (x - mean) / np.sqrt(variance + self.eps)
+        x_norm = x_hat * self.gamma + self.beta
 
-        if self.affine:
-            x_norm = x_norm * self.gamma + self.beta
+        self._x = x
+        self._x_norm = x_norm
+        self._mean = mean
+        self._std = std
 
         return x_norm
 
@@ -58,7 +57,43 @@ class LayerNorm(BaseLayer):
             Dict[str, np.ndarray]: Dictionary containing gamma and beta if affine is True.
         """
         params = {}
-        if self.affine:
-            params["gamma"] = self.gamma
-            params["beta"] = self.beta
+        params["gamma"] = self.gamma
+        params["beta"] = self.beta
         return params
+
+    # def backward(self, dout: np.ndarray) -> np.ndarray:
+    #     """
+    #     Backward pass for LayerNorm.
+
+    #     Parameters:
+    #         dout (np.ndarray): Gradient of the loss w.r.t. the output.
+
+    #     Returns:
+    #         np.ndarray: Gradient of the loss w.r.t. the input.
+    #     """
+    #     x = self._x
+    #     x_norm = self._x_norm
+    #     std = self._std
+
+    #     N = x.shape[-1]  # normalized shape (e.g., feature dim)
+
+    #     # Initialize gradients
+    #     dx_norm = dout * self.gamma if self.affine else dout
+
+    #     # Backprop through normalization
+    #     dx = (
+    #         (1.0 / N)
+    #         * (1.0 / std)
+    #         * (
+    #             N * dx_norm
+    #             - np.sum(dx_norm, axis=-1, keepdims=True)
+    #             - x_norm * np.sum(dx_norm * x_norm, axis=-1, keepdims=True)
+    #         )
+    #     )
+
+    #     # Gradients for gamma and beta
+    #     if self.affine:
+    #         self._dgamma = np.sum(dout * x_norm, axis=0)
+    #         self._dbeta = np.sum(dout, axis=0)
+
+    #     return dx
