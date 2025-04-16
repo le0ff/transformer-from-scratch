@@ -1,18 +1,13 @@
+from typing import Any
+
 import numpy as np
 import pytest
 from numpy import ndarray
 
 from src.layers.multiheadattentionblock import MultiHeadAttentionBlock
 
-# test output shape , done
-# test forward path with known input and output with Dropout disabled , done
-# Single-head vs multi-head equivalence
-# Mask test:
-# Deterministic behavior with fixed seed:
-# invalid parameters or dimensions
-# test get_parameters and set_parameters methods , done
 
-
+# --- Fixtures ---
 @pytest.fixture
 def layer_config() -> dict[str, int]:
     """Basic layer configuration."""
@@ -77,6 +72,46 @@ def sample_causal_mask(
     return mask
 
 
+@pytest.mark.parametrize(
+    "invalid_config, expected_error",
+    [
+        ({"d_model": 0, "n_heads": 2, "dropout_rate": 0.0}, ValueError),
+        ({"d_model": 10, "n_heads": 0, "dropout_rate": 0.0}, ValueError),
+        ({"d_model": -10, "n_heads": 2, "dropout_rate": 0.0}, ValueError),
+        ({"d_model": 10, "n_heads": -2, "dropout_rate": 0.0}, ValueError),
+        ({"d_model": 10, "n_heads": -2, "dropout_rate": 1.5}, ValueError),
+        ({"d_model": 10, "n_heads": -2, "dropout_rate": -1.0}, ValueError),
+        ({"d_model": 10, "n_heads": 2, "dropout_rate": 0.0, "seed": "abc"}, ValueError),
+        ({"d_model": 10, "n_heads": 2, "dropout_rate": 0.0, "seed": 1.5}, ValueError),
+    ],
+    ids=[
+        "zero_model_dim",
+        "zero_heads",
+        "neg_model_dim",
+        "neg_heads",
+        "bad_dropout_rate",
+        "neg_dropout_rate",
+        "bad_seed_type_str",
+        "bad_seed_type_float",
+    ],
+)
+
+# --- Test Functions ---
+def test_init_errors(
+    invalid_config: dict[str, Any], expected_error: type[Exception]
+) -> None:
+    """Tests that the multihead attention block raises errors on invalid initialization parameters."""
+    d_model = invalid_config.get("d_model", 10)
+    n_heads = invalid_config.get("n_heads", 5)
+    dropout_rate = invalid_config.get("dropout_rate", 0.0)
+    seed = invalid_config.get("seed", None)
+
+    with pytest.raises(expected_error):
+        MultiHeadAttentionBlock(
+            d_model=d_model, n_heads=n_heads, dropout_rate=dropout_rate, seed=seed
+        )
+
+
 def test_output_shape(
     multihead_attention_block: MultiHeadAttentionBlock,
     sample_input_3d: ndarray,
@@ -109,7 +144,7 @@ def test_get_parameters(
     assert "w_o" in parameters, "w_o parameter not found."
 
 
-def test_set_parameters(
+def test_set_parameters_valid(
     multihead_attention_block: MultiHeadAttentionBlock,
 ) -> None:
     """
@@ -137,7 +172,66 @@ def test_set_parameters(
     assert np.array_equal(multihead_attention_block.w_o.W, new_w_o)
 
 
-def test_forward_path() -> None:
+def test_set_parameters_invalid_dictionary(
+    multihead_attention_block: MultiHeadAttentionBlock,
+) -> None:
+    """
+    Test set_parameters method with invalid parameters.
+    """
+    # Create new invalid parameters
+    d_model = multihead_attention_block.d_model
+
+    new_w_q = np.random.randn(d_model, d_model)
+    new_w_k = np.random.randn(d_model, d_model)
+    new_w_v = np.random.randn(d_model, d_model)
+    params_to_set = {
+        "w_q": new_w_q.copy(),
+        "w_k": new_w_k.copy(),
+        "w_v": new_w_v.copy(),
+        # Missing w_o
+    }
+
+    with pytest.raises(ValueError):
+        multihead_attention_block.set_parameters(params_to_set)
+
+
+def test_set_parameters_invalid_shape(
+    multihead_attention_block: MultiHeadAttentionBlock,
+) -> None:
+    """
+    Test set_parameters method with invalid shape.
+    """
+    # Create new invalid parameters
+    new_w_q = (
+        np.random.randn(
+            multihead_attention_block.d_model, multihead_attention_block.d_model
+        )
+        * 5
+    )
+    new_w_k = (
+        np.random.randn(
+            multihead_attention_block.d_model, multihead_attention_block.d_model
+        )
+        * 5
+    )
+    new_w_v = (
+        np.random.randn(
+            multihead_attention_block.d_model, multihead_attention_block.d_model
+        )
+        * 5
+    )
+    params_to_set = {
+        "w_q": new_w_q.copy(),
+        "w_k": new_w_k.copy(),
+        "w_v": new_w_v.copy(),
+        "w_o": np.random.randn(1, 1),  # Invalid shape
+    }
+
+    with pytest.raises(ValueError):
+        multihead_attention_block.set_parameters(params_to_set)
+
+
+def test_forward_path_valid() -> None:
     """
     Test the forward path.
     """
@@ -154,7 +248,6 @@ def test_forward_path() -> None:
     }
     mhab.set_parameters(params_to_set)
     output = mhab(x, x, x, mask)
-    print(output)
     expected_output = np.array(
         [
             [
@@ -168,3 +261,27 @@ def test_forward_path() -> None:
     assert np.array_equal(output, expected_output), (
         "Output does not match expected output."
     )
+
+
+def test_forward_path_invalid_input_shape() -> None:
+    """
+    Test the forward path with invalid input shape.
+    """
+    mhab = MultiHeadAttentionBlock(d_model=4, n_heads=1, dropout_rate=0.0)
+    x = np.array([[[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]]])
+    mask = np.array([[[[1, 0, 0, 0], [1, 1, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1]]]])
+
+    with pytest.raises(ValueError):
+        mhab(x, x, x, mask)
+
+
+def test_forward_path_invalid_mask_shape() -> None:
+    """
+    Test the forward path with invalid mask shape.
+    """
+    mhab = MultiHeadAttentionBlock(d_model=4, n_heads=1, dropout_rate=0.0)
+    x = np.array([[[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]])
+    mask = np.array([[[[1, 0], [1, 1], [1, 1], [1, 1]]]])
+
+    with pytest.raises(ValueError):
+        mhab(x, x, x, mask)
