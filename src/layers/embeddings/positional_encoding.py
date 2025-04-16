@@ -12,6 +12,12 @@ class PositionalEncoding(BaseLayer):
 
     def __init__(self, d_model: int, max_len: int = 500):
         super().__init__()
+        # Input validation
+        if not isinstance(d_model, int) or d_model <= 0:
+            raise ValueError("d_model must be a positive integer")
+        if not isinstance(max_len, int) or max_len <= 0:
+            raise ValueError("max_len must be a positive integer")
+
         self.d_model = d_model
         self.max_len = max_len
         self.pe = self.build_pe(max_len, d_model)
