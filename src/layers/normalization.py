@@ -10,18 +10,18 @@ class LayerNorm(BaseLayer):
     Layer Normalization Layer as introduced in Layer Normalization" (Ba et al., 2016).
     """
 
-    def __init__(self, normalized_shape: int, eps: float = 1e-5, affine: bool = True):
+    def __init__(self, normalized_shape: int, eps: float = 1e-5):
         """
         Initialize the LayerNorm layer.
 
         Parameters:
             normalized_shape (int): The number of features in the input to normalize.
             eps (float): A small value to prevent division by zero.
-            affine (bool): Whether to use learnable affine parameters (gamma and beta).
         """
         super().__init__()
         self.normalized_shape = normalized_shape
         self.eps = eps
+        # default values for adaptive gain and bias as described in the paper
         self.gamma = np.ones((normalized_shape,), dtype=np.float32)
         self.beta = np.zeros((normalized_shape,), dtype=np.float32)
 
@@ -33,7 +33,7 @@ class LayerNorm(BaseLayer):
             x (np.ndarray): Input data of shape (..., normalized_shape).
 
         Returns:
-            np.ndarray: Normalized and optionally affine-transformed output.
+            np.ndarray: Normalized output.
         """
         mean = np.mean(x, axis=-1, keepdims=True)
         variance = np.var(x, axis=-1, keepdims=True)
@@ -54,12 +54,40 @@ class LayerNorm(BaseLayer):
         Get the parameters of the layer.
 
         Returns:
-            Dict[str, np.ndarray]: Dictionary containing gamma and beta if affine is True.
+            Dict[str, np.ndarray]: Dictionary containing gamma and beta.
         """
-        params = {}
-        params["gamma"] = self.gamma
-        params["beta"] = self.beta
+        params = {"gamma": self.gamma, "beta": self.beta}
+
         return params
+
+    def set_parameters(self, params: Dict[str, np.ndarray]):
+        """
+        Set the parameters for the normalization layer
+
+        Parameters:
+            params(Dict[str, ndarray]): Dictionary of parameters
+        """
+        # Set gain
+        if "gamma" in params:
+            if params["gamma"].shape != (self.normalized_shape,):
+                raise ValueError(
+                    f"Expected gamma shape {(self.normalized_shape,)}, "
+                    f"but got {params['gamma'].shape}"
+                )
+            self.gamma = params["gamma"]
+        else:
+            raise ValueError("Scale parameter 'gamma' missing in params dictionary.")
+
+        # Set bias
+        if "beta" in params:
+            if params["beta"].shape != (self.normalized_shape,):
+                raise ValueError(
+                    f"Expected beta shape {(self.normalized_shape,)}, "
+                    f"but got {params['beta'].shape}"
+                )
+            self.beta = params["beta"]
+        else:
+            raise ValueError("Bias parameter 'beta' missing in params dictionary.")
 
     # def backward(self, dout: np.ndarray) -> np.ndarray:
     #     """
@@ -78,7 +106,7 @@ class LayerNorm(BaseLayer):
     #     N = x.shape[-1]  # normalized shape (e.g., feature dim)
 
     #     # Initialize gradients
-    #     dx_norm = dout * self.gamma if self.affine else dout
+    #     dx_norm = dout * self.gamma
 
     #     # Backprop through normalization
     #     dx = (
@@ -92,8 +120,8 @@ class LayerNorm(BaseLayer):
     #     )
 
     #     # Gradients for gamma and beta
-    #     if self.affine:
-    #         self._dgamma = np.sum(dout * x_norm, axis=0)
-    #         self._dbeta = np.sum(dout, axis=0)
+    #
+    #      self._dgamma = np.sum(dout * x_norm, axis=0)
+    #      self._dbeta = np.sum(dout, axis=0)
 
     #     return dx
