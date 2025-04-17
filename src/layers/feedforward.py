@@ -115,13 +115,11 @@ class FeedForwardBlock(BaseLayer):
         processed_keys = set()
 
         for prefixed_key, param_value in params.items():
-            found_layer = False
             for layer_name in params_by_layer.keys():
                 prefix = f"{layer_name}_"
                 if prefixed_key.startswith(prefix):
                     original_param_name = prefixed_key[len(prefix) :]
                     params_by_layer[layer_name][original_param_name] = param_value
-                    found_layer = True
                     processed_keys.add(prefixed_key)
                     break
 
@@ -142,7 +140,7 @@ class FeedForwardBlock(BaseLayer):
                         f"Unexpected error setting parameters for sub-layer '{layer_name}': {e}"
                     ) from e
 
-    # def backward(self, output_grad: ndarray) -> ndarray:
+    # def backward(self, grad_output: ndarray) -> ndarray:
     #     """
     #     Performs backward pass through the feedforward block.
 
@@ -151,11 +149,11 @@ class FeedForwardBlock(BaseLayer):
     #     their definition in self._sub_layers.
 
     #     Parameters:
-    #         output_grad (ndarray): Gradient of the loss with respect to the output of this block.
+    #         grad_output (ndarray): Gradient of the loss with respect to the output of this block.
 
     #     Returns:
     #         ndarray: Gradient of the loss with respect to the input of this block.
     #     """
     #     for layer in reversed(self._layers.values()):
-    #         output_grad = layer.backward(output_grad)
-    #     return output_grad
+    #         grad_output = layer.backward(grad_output)
+    #     return grad_output
