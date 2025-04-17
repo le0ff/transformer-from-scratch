@@ -17,8 +17,15 @@ def max_len() -> int:
 
 
 @pytest.fixture
-def pe_block(d_model: int, max_len: int) -> PositionalEncoding:
-    return PositionalEncoding(d_model=d_model, max_len=max_len)
+def dropout_rate() -> float:
+    return 0.5
+
+
+@pytest.fixture
+def pe_block(d_model: int, max_len: int, dropout_rate: float) -> PositionalEncoding:
+    return PositionalEncoding(
+        d_model=d_model, max_len=max_len, dropout_rate=dropout_rate
+    )
 
 
 @pytest.fixture
@@ -66,4 +73,11 @@ def test_encoding_for_known_position(pe_block: PositionalEncoding):
 def test_invalid_params(bad_d_model, bad_max_len, error_msg):
     """Test if invalid parameter values raise ValueError."""
     with pytest.raises(ValueError, match=error_msg):
-        PositionalEncoding(d_model=bad_d_model, max_len=bad_max_len)
+        PositionalEncoding(d_model=bad_d_model, max_len=bad_max_len, dropout_rate=0.0)
+
+
+@pytest.mark.parametrize("shape", [(2, 10, 16)], ids=["3d"])
+def test_forward_shape_flexible(pe_block: PositionalEncoding, shape):
+    dummy_input = np.random.randn(*shape).astype(np.float32)
+    out = pe_block.forward(dummy_input)
+    assert out.shape == dummy_input.shape
