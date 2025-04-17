@@ -65,11 +65,11 @@ class PositionalEncoding(BaseLayer):
                 f"Input sequence length {seq_len} exceeds layer's pre-computed max_len {self.max_len}"
             )
 
-        # (batch_size, sequence_length, d_model)
-        seq_len = x.shape[1]
         pe_slice = self.pe[:seq_len]
         # (1, seq_length, d_model) to fit above
-        return x + pe_slice[np.newaxis, :, :]
+        out = x + pe_slice[np.newaxis, :, :]
+        # Apply dropout
+        return self.dropout(out, **kwargs)
 
     def train(self) -> None:
         """Set the layer to training mode."""
