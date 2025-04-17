@@ -28,7 +28,7 @@ class PositionalEncoding(BaseLayer):
         div_term = np.exp(np.arange(0, d_model, 2) * -(np.log(10000.0) / d_model))
         pe = np.zeros((max_len, d_model), dtype=np.float32)
         pe[:, 0::2] = np.sin(position * div_term)
-        # Trims in case of odd sizes
+        # Trims in case of odd values for d_model
         pe[:, 1::2] = np.cos(position * div_term[: (d_model // 2)])
 
         return pe
