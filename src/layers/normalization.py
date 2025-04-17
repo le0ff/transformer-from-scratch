@@ -19,6 +19,13 @@ class LayerNorm(BaseLayer):
             eps (float): A small value to prevent division by zero.
         """
         super().__init__()
+
+        if not isinstance(normalized_shape, int) or normalized_shape <= 0:
+            raise ValueError("`normalized_shape` must be a positive integer.")
+
+        if not isinstance(eps, (float, np.floating)) or eps <= 0.0:
+            raise ValueError("`eps` must be a positive float.")
+
         self.normalized_shape = normalized_shape
         self.eps = eps
         # default values for adaptive gain and bias as described in the paper
