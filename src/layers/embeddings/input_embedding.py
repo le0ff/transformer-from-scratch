@@ -26,10 +26,11 @@ class InputEmbedding(BaseLayer):
         self.W_embed = (
             rng.random.standard_normal((vocab_size, d_model)).astype(np.float32) * scale
         )
-        self.embedding_grad = np.zeros_like(self.embedding_matrix)
+        self.embedding_grad = np.zeros_like(self.W_embed)
         self.scale = np.sqrt(np.float32(d_model))
+        self._input_cache = None
 
-    def forward(self, x: np.ndarry, **kwargs: Any) -> np.ndarray:
+    def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
         """
         Tokenize the input text, apply embedding and positional encoding.
 
@@ -40,6 +41,9 @@ class InputEmbedding(BaseLayer):
             raise ValueError(
                 f"Input x must have 2 dimensions (batch_size, sequence_length), but got {x.ndim}"
             )
+        # Check Tokenizer Class
+        # if not np.issubdtype(x.dtype, np.integer):
+        #     raise ValueError("Input tensor must contain integer token indices.")
         if np.max(x) >= self.vocab_size or np.min(x) < 0:
             max_val, min_val = np.max(x), np.min(x)
             raise ValueError(
@@ -47,31 +51,29 @@ class InputEmbedding(BaseLayer):
                 f"Found min={min_val}, max={max_val}. Check tokenizer/vocab size."
             )
 
+        self._input_cache = x
+
         # Token Embedding Lookup
         # Select rows from W_embed based on integer IDs in x
-        token_embeds = self.W_embed[x]  # Shape: (batch_size, seq_len, d_model)
+        # Shape: (batch_size, seq_len, d_model)
+        token_embeds = self.W_embed[x]
 
-        # Scale token embeddings
-        scaled_token_embeds = token_embeds * self.scale_factor
+        scaled_token_embeds = token_embeds * self.scale
 
         return scaled_token_embeds
-
-        # return self.embedding(x) * np.sqrt(self.d_model)
 
     # def backward(self, d_out: np.ndarray):
     #     """
     #     Backpropagate gradients through the embedding layer.
 
     #     Args:
-    #     d_out (np.ndarray): Gradient of loss w.r.t. output (batch, seq_len, d_model)
+    #         d_out (np.ndarray): Gradient of loss w.r.t. output (batch, seq_len, d_model)
     #     """
-    #     batch_size, seq_len = self.token_ids.shape
-    #     grad = d_out
-
+    #     batch_size, seq_len = self._input_cache.shape
     #     for b in range(batch_size):
     #         for t in range(seq_len):
-    #             token_id = self.token_ids[b, t]
-    #             self.embedding_grad[token_id] += grad[b, t]
+    #             token_id = self._input_cache[b, t]
+    #             self.embedding_grad[token_id] += d_out[b, t]
 
     # def backward2(self, grad_output: np.ndarray) -> Dict[str, np.ndarray]:
     #     """
@@ -79,40 +81,24 @@ class InputEmbedding(BaseLayer):
 
     #     Args:
     #         grad_output (np.ndarray): Gradient of the loss with respect to the output
-    #                         of this layer. Shape: (batch_size, seq_len, d_model).
+    #                                   of this layer. Shape: (batch_size, seq_len, d_model)
 
     #     Returns:
     #         Dict[str, np.ndarray]: Dictionary containing gradients for parameters.
-    #                             {'W_embed': gradient_wrt_W_embed}
+    #                                {'W_embed': gradient_wrt_W_embed}
     #     """
-    #     # We need the input `x` that generated the output `y`
-    #     # Store `x` during the forward pass: self.x = x
-    #     if not hasattr(self, "x"):
-    #         raise RuntimeError("Need to call forward pass first to store input x.")
+    #     if not hasattr(self, "_input_cache"):
+    #         raise RuntimeError("Need to call forward pass before backward.")
 
     #     batch_size, seq_len, _ = grad_output.shape
-    #     # Initialize gradient matrix for W_embed with zeros
     #     dL_dW_embed = np.zeros_like(self.W_embed, dtype=np.float32)
 
-    #     # Apply the scaling factor from the incoming gradient
-    #     grad_output_scaled_contribution = grad_output * self.scale_factor
+    #     grad_output_scaled = grad_output * self.scale
 
-    # Efficiently add gradients:
-    # For each token_id present in self.x, sum the corresponding
-    # incoming gradients (grad_output_scaled_contribution) at the positions where it occurred.
-    # np.add.at performs this scatter-add operation efficiently.
-    # It iterates through self.x, and for each element x[b, s] (which is a token_id),
-    # it adds the corresponding vector grad_output_scaled_contribution[b, s, :]
-    # to the row dL_dW_embed[token_id, :].
-    # np.add.at(dL_dW_embed, self.x, grad_output_scaled_contribution)
+    #     # Efficient scatter-add of gradients
+    #     np.add.at(dL_dW_embed, self._input_cache, grad_output_scaled)
 
-    # # Store the input x in the forward pass
-    # # del self.x # Clean up stored input
-
-    # return {"W_embed": dL_dW_embed}
-
-    # def step(self, lr=1e-3):
-    # self.embedding_matrix -= lr * self.embedding_grad
+    #     return {"W_embed": dL_dW_embed}
 
     def get_parameters(self) -> Dict[str, np.ndarray]:
         """
@@ -124,11 +110,13 @@ class InputEmbedding(BaseLayer):
         """
         Set the learnable parameters of the layer (the embedding matrix).
         """
-        if "W_embed" in params:
-            # Validate shape of W_embed
-            if params["W_embed"].shape != (self.vocab_size, self.d_model):
-                raise ValueError(
-                    f"Shape mismatch for W_embed: expected {self.vocab_size, self.d_model}, "
-                    f"but got {params['W_embed'].shape}"
-                )
+        if "W_embed" not in params:
+            raise ValueError("Missing parameter: 'W_embed'")
+
+        if params["W_embed"].shape != (self.vocab_size, self.d_model):
+            raise ValueError(
+                f"Shape mismatch for W_embed: expected {(self.vocab_size, self.d_model)}, "
+                f"got {params['W_embed'].shape}"
+            )
+
         self.W_embed = params["W_embed"]
