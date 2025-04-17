@@ -24,7 +24,7 @@ class InputEmbedding(BaseLayer):
             # Random number generator with a seed for reproducibility
             rng = np.random.default_rng(seed)
         self.W_embed = (
-            rng.random.standard_normal((vocab_size, d_model)).astype(np.float32) * scale
+            rng.standard_normal((vocab_size, d_model)).astype(np.float32) * scale
         )
         self.embedding_grad = np.zeros_like(self.W_embed)
         self.scale = np.sqrt(np.float32(d_model))
@@ -42,8 +42,8 @@ class InputEmbedding(BaseLayer):
                 f"Input x must have 2 dimensions (batch_size, sequence_length), but got {x.ndim}"
             )
         # Check Tokenizer Class
-        # if not np.issubdtype(x.dtype, np.integer):
-        #     raise ValueError("Input tensor must contain integer token indices.")
+        if not np.issubdtype(x.dtype, np.integer):
+            raise ValueError("Input tensor must contain integer token indices.")
         if np.max(x) >= self.vocab_size or np.min(x) < 0:
             max_val, min_val = np.max(x), np.min(x)
             raise ValueError(
@@ -56,6 +56,7 @@ class InputEmbedding(BaseLayer):
         # Token Embedding Lookup
         # Select rows from W_embed based on integer IDs in x
         # Shape: (batch_size, seq_len, d_model)
+
         token_embeds = self.W_embed[x]
 
         scaled_token_embeds = token_embeds * self.scale
