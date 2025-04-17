@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from numpy import ndarray
 
@@ -8,7 +8,9 @@ from src.layers.normalization import LayerNorm
 
 
 class ResidualConnection(BaseLayer):
-    def __init__(self, normalized_shape: int, dropout_rate: float = 0.0):
+    def __init__(
+        self, normalized_shape: int, eps: Optional[float], dropout_rate: float = 0.0
+    ):
         """
         Initializes ResidualConnection layer.
 
@@ -17,7 +19,7 @@ class ResidualConnection(BaseLayer):
         """
         super().__init__()
         self.dropout = Dropout(dropout_rate)
-        self.layer_norm = LayerNorm(normalized_shape=normalized_shape)
+        self.layer_norm = LayerNorm(normalized_shape=normalized_shape, eps=eps)
 
     def forward(self, x: ndarray, sublayer: Any):
         """
