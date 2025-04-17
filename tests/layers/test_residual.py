@@ -151,3 +151,20 @@ def test_residual_forward_deterministic(
     assert np.allclose(output, expected_output), (
         f"Expected output {expected_output}, got {output}"
     )
+
+
+def test_residual_forward_with_dropout(
+    residual_layer: ResidualConnection,
+    linear_layer: Linear,
+    layer_config: dict[str, int],
+) -> None:
+    """Tests forward pass of residual layer with dropout."""
+    x = np.random.rand(5, layer_config["normalized_shape"]).astype(
+        np.float32
+    )  # Example input
+    residual_layer.dropout.rate = 0.5  # Set dropout rate to 50%
+    output = residual_layer.forward(x, linear_layer)
+
+    assert output.shape == x.shape, (
+        f"Expected output shape {x.shape}, got {output.shape}"
+    )
