@@ -123,7 +123,7 @@ def test_ff_init_invalid_params(invalid_params: dict, error_msg_match: str) -> N
         FeedForwardBlock(**invalid_params)
 
 
-def test_ff_train_eval_propagation(ff_block: FeedForwardBlock):
+def test_ff_train_eval_propagation(ff_block: FeedForwardBlock) -> None:
     """Tests if train/eval mode propagates correctly to sub-layers."""
     # Initial state (should be training)
     assert ff_block.training is True
@@ -180,7 +180,7 @@ def test_ff_forward_shape(
     )
 
 
-def test_ff_get_parameters(ff_block_seeded: FeedForwardBlock):
+def test_ff_get_parameters(ff_block_seeded: FeedForwardBlock) -> None:
     """Tests the get_parameters method."""
     params = ff_block_seeded.get_parameters()
 
@@ -201,7 +201,7 @@ def test_ff_get_parameters(ff_block_seeded: FeedForwardBlock):
     assert params["linear2_b"].shape == (ff_block_seeded.d_model,)
 
 
-def test_ff_set_parameters_valid(ff_block: FeedForwardBlock):
+def test_ff_set_parameters_valid(ff_block: FeedForwardBlock) -> None:
     """Tests setting valid parameters using set_parameters."""
     d_model = ff_block.d_model
     d_ff = ff_block.d_ff
@@ -298,7 +298,7 @@ def test_ff_seed_derivation_reproducibility(ff_config: dict, ff_seed: int) -> No
     assert_array_equal(params1["linear2_W"], params2["linear2_W"])
     assert_array_equal(params1["linear2_b"], params2["linear2_b"])
 
-    # Check linear layers are different
+    # Check linear layers are different (within the same block)
     assert not np.array_equal(params1["linear1_W"], params1["linear2_W"]), (
         "Weights of linear1 and linear2 should differ even with the same main seed."
     )
