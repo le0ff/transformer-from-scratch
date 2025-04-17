@@ -42,6 +42,13 @@ class LayerNorm(BaseLayer):
         Returns:
             np.ndarray: Normalized output.
         """
+        # Check if last axis dim is equal to normalized_shape
+        if x.shape[-1] != self.normalized_shape:
+            raise ValueError(
+                f"Expected input's last dimension to be {self.normalized_shape}, "
+                f"but got {x.shape[-1]}."
+            )
+
         mean = np.mean(x, axis=-1, keepdims=True)
         variance = np.var(x, axis=-1, keepdims=True)
         # Introduced for backprop later
