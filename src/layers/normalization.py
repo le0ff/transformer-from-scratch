@@ -103,12 +103,12 @@ class LayerNorm(BaseLayer):
         else:
             raise ValueError("Bias parameter 'beta' missing in params dictionary.")
 
-    # def backward(self, dout: np.ndarray) -> np.ndarray:
+    # def backward(self, grad_output: np.ndarray) -> np.ndarray:
     #     """
     #     Backward pass for LayerNorm.
 
     #     Parameters:
-    #         dout (np.ndarray): Gradient of the loss w.r.t. the output.
+    #         grad_output (np.ndarray): Gradient of the loss w.r.t. the output.
 
     #     Returns:
     #         np.ndarray: Gradient of the loss w.r.t. the input.
@@ -120,7 +120,7 @@ class LayerNorm(BaseLayer):
     #     N = x.shape[-1]  # normalized shape (e.g., feature dim)
 
     #     # Initialize gradients
-    #     dx_norm = dout * self.gamma
+    #     dx_norm = grad_output * self.gamma
 
     #     # Backprop through normalization
     #     dx = (
@@ -135,7 +135,7 @@ class LayerNorm(BaseLayer):
 
     #     # Gradients for gamma and beta
     #
-    #      self._dgamma = np.sum(dout * x_norm, axis=0)
-    #      self._dbeta = np.sum(dout, axis=0)
+    #      self._dgamma = np.sum grad_output * x_norm, axis=0)
+    #      self._dbeta = np.sum grad_output, axis=0)
 
     #     return dx
