@@ -15,7 +15,7 @@ class InputEmbedding(BaseLayer):
         super().__init__()
         self.d_model = d_model
         self.vocab_size = vocab_size
-        scale = np.sqrt(1.0 / d_model)
+        scale_std = np.sqrt(1.0 / d_model)
         if seed is None:
             rng = np.random.default_rng()
         else:
@@ -24,7 +24,7 @@ class InputEmbedding(BaseLayer):
             # Random number generator with a seed for reproducibility
             rng = np.random.default_rng(seed)
         self.W_embed = (
-            rng.standard_normal((vocab_size, d_model)).astype(np.float32) * scale
+            rng.standard_normal((vocab_size, d_model)).astype(np.float32) * scale_std
         )
         self.embedding_grad = np.zeros_like(self.W_embed)
         self.scale = np.sqrt(np.float32(d_model))
@@ -32,10 +32,19 @@ class InputEmbedding(BaseLayer):
 
     def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
         """
-        Tokenize the input text, apply embedding and positional encoding.
+        Look up token embeddings and apply √d_model scaling.
 
-        Returns:
-            np.ndarray: Normalize embeddings
+        Parameters
+        ----------
+        x : np.ndarray
+            Integer token‑ID matrix of shape **(batch_size, seq_len)**.
+
+        Returns
+        -------
+        np.ndarray
+            Embedded tokens of shape **(batch_size, seq_len, d_model)**,
+            multiplied by √d_model as described in *Attention Is All You Need*
+            3.4 Embedding and Softmax
         """
         if x.ndim != 2:
             raise ValueError(
@@ -53,9 +62,10 @@ class InputEmbedding(BaseLayer):
 
         self._input_cache = x
 
-        # Token Embedding Lookup
-        # Select rows from W_embed based on integer IDs in x
-        # Shape: (batch_size, seq_len, d_model)
+        # Vectorised embedding lookup:
+        # x has shape (batch_size, seq_len) with integer token IDs.
+        # W_embed[x] returns the corresponding embedding vectors,
+        # producing shape (batch_size, seq_len, d_model).
 
         token_embeds = self.W_embed[x]
 
