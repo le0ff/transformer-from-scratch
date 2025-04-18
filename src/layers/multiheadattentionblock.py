@@ -35,16 +35,34 @@ class MultiHeadAttentionBlock(BaseLayer):
             raise ValueError("Dropout rate must be between 0 and 1.")
         if d_model % n_heads != 0:
             raise ValueError("d_model must be divisible by n_heads.")
+        if seed is not None and not isinstance(seed, int):
+            raise ValueError("Seed must be an integer.")
 
         self.head_dim = d_model // n_heads
 
-        # Initialize weights for query, key, value, and output
-        self.w_q = Linear(d_model, d_model, use_bias=False, seed=seed)
-        self.w_k = Linear(d_model, d_model, use_bias=False, seed=seed)
-        self.w_v = Linear(d_model, d_model, use_bias=False, seed=seed)
-        self.w_o = Linear(d_model, d_model, use_bias=False, seed=seed)
+        if seed is not None:
+            main_rng = np.random.default_rng(seed)
+            max_seed_val = 2**31 - 1
+            seeds = main_rng.integers(0, max_seed_val, size=5)
+            seed_w_q = seeds[0]
+            seed_w_k = seeds[1]
+            seed_w_v = seeds[2]
+            seed_w_o = seeds[3]
+            seed_dropout = seeds[4]
+        else:
+            seed_w_q = None
+            seed_w_k = None
+            seed_w_v = None
+            seed_w_o = None
+            seed_dropout = None
 
-        self.dropout = Dropout(dropout_rate)
+        # Initialize weights for query, key, value, and output
+        self.w_q = Linear(d_model, d_model, use_bias=False, seed=seed_w_q)
+        self.w_k = Linear(d_model, d_model, use_bias=False, seed=seed_w_k)
+        self.w_v = Linear(d_model, d_model, use_bias=False, seed=seed_w_v)
+        self.w_o = Linear(d_model, d_model, use_bias=False, seed=seed_w_o)
+
+        self.dropout = Dropout(dropout_rate, seed=seed_dropout)
         self.softmax = Softmax()
 
     @staticmethod
@@ -77,7 +95,7 @@ class MultiHeadAttentionBlock(BaseLayer):
 
         # Compute attention scores
         attention_scores = softmax(
-            ((query @ key.transpose(0, 1, 3, 2)) / np.sqrt(d_k)), mask
+            ((query @ key.transpose(0, 1, 3, 2)) / np.sqrt(d_k)), causal_mask=mask
         )
 
         # Apply dropout to attention scores
