@@ -195,3 +195,23 @@ class MultiHeadAttentionBlock(BaseLayer):
         self.w_k.set_parameters({"W": params["w_k"]})
         self.w_v.set_parameters({"W": params["w_v"]})
         self.w_o.set_parameters({"W": params["w_o"]})
+
+    def train(self) -> None:
+        """Set all sublayers to training mode."""
+        super().train()
+        self.dropout.train()
+        self.w_q.train()
+        self.w_k.train()
+        self.w_v.train()
+        self.w_o.train()
+        self.softmax.train()
+
+    def eval(self) -> None:
+        """Set all sublayers to evaluation mode."""
+        super().eval()
+        self.dropout.eval()
+        self.w_q.eval()
+        self.w_k.eval()
+        self.w_v.eval()
+        self.w_o.eval()
+        self.softmax.eval()
