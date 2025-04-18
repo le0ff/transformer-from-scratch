@@ -109,15 +109,21 @@ class FeedForwardBlock(BaseLayer):
 
     def set_parameters(self, params: Dict[str, ndarray]) -> None:
         """Sets parameters, expecting prefixed keys."""
+        # set up dictionary with layer names as keys and empty dicts for parameters
         params_by_layer = {
             name: {} for name, layer in self._layers.items() if layer.get_parameters()
         }
         processed_keys = set()
 
+        # check if existing layer_names are in params dictionary
+        # iterate over passed params
         for prefixed_key, param_value in params.items():
+            # iterate over existing layer names
             for layer_name in params_by_layer.keys():
                 prefix = f"{layer_name}_"
+                # check if prefixed_key starts with the layer name
                 if prefixed_key.startswith(prefix):
+                    # extract original parameter name (e.g. "linear1_W" -> "W")
                     original_param_name = prefixed_key[len(prefix) :]
                     params_by_layer[layer_name][original_param_name] = param_value
                     processed_keys.add(prefixed_key)
@@ -127,6 +133,7 @@ class FeedForwardBlock(BaseLayer):
             missing_keys = set(params.keys()) - processed_keys
             raise ValueError(f"Missing parameters for layers: {missing_keys}")
 
+        # set parameters for each layer by using created and validated dictionary
         for layer_name, layer_params_dict in params_by_layer.items():
             if layer_params_dict:
                 try:
