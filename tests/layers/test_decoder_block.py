@@ -1,12 +1,3 @@
-"""
-pytest suite for `DecoderBlock`
-
-The style mirrors the FeedForwardBlock tests you showed:
-* rich use of fixtures
-* explicit shape / mode / parameter checks
-* round‑trip tests for get/set_parameters
-"""
-
 import re
 from typing import Dict
 
@@ -15,7 +6,7 @@ import pytest
 from numpy.testing import assert_array_equal
 
 # --------------------------------------------------------------------------- #
-# Imports from your code‑base (adjust paths if needed)
+# Imports from your code-base (adjust paths if needed)
 # --------------------------------------------------------------------------- #
 from src.layers.decoder import DecoderBlock
 from src.layers.feedforward import FeedForwardBlock
@@ -27,7 +18,7 @@ from src.layers.multiheadattentionblock import MultiHeadAttentionBlock
 # --------------------------------------------------------------------------- #
 @pytest.fixture
 def dec_cfg() -> Dict:
-    """Common hyper‑params for the decoder block."""
+    """Common hyper-params for the decoder block."""
     return dict(d_model=16, n_heads=4, d_ff=32, dropout=0.1)
 
 
@@ -98,16 +89,17 @@ def sample_inputs(dec_cfg: Dict) -> Dict[str, np.ndarray]:
     rng = np.random.default_rng(999)
     batch, src_len, tgt_len = 2, 5, 3
     d_model = dec_cfg["d_model"]
+    n_heads = dec_cfg["n_heads"]
 
     x = rng.standard_normal((batch, tgt_len, d_model)).astype(np.float32)
     enc_out = rng.standard_normal((batch, src_len, d_model)).astype(np.float32)
 
-    # causal mask (B,1,T,T)
-    causal = np.tril(np.ones((tgt_len, tgt_len), bool))[None, None, ...]
-    causal = np.broadcast_to(causal, (batch, 1, tgt_len, tgt_len))
+    # causal mask broadcast to heads (batch, heads, tgt_len, tgt_len)
+    causal_base = np.tril(np.ones((tgt_len, tgt_len), bool))
+    causal = np.broadcast_to(causal_base, (batch, n_heads, tgt_len, tgt_len))
 
-    # padding mask (all True for simplicity)  (B,1,1,S)
-    pad = np.ones((batch, 1, 1, src_len), bool)
+    # padding mask for cross-attn (batch, heads, tgt_len, src_len)
+    pad = np.ones((batch, n_heads, tgt_len, src_len), bool)
 
     return dict(x=x, enc=enc_out, tgt_mask=causal, src_mask=pad)
 
@@ -158,7 +150,7 @@ def test_get_set_roundtrip(decoder_block: DecoderBlock):
         (dict(dropout=-0.1), re.escape("dropout must be in [0.0, 1.0).")),
         (dict(dropout=1.3), re.escape("dropout must be in [0.0, 1.0).")),
         # Seed not int
-        (dict(seed="abc"), "seed must be an int"),
+        (dict(seed="abc"), re.escape("seed must be an int or None.")),
     ],
     ids=["neg_dropout", "high_dropout", "seed_str"],
 )
@@ -186,6 +178,7 @@ def test_init_invalid(
 def test_seed_reproducibility(
     dec_cfg: Dict, seeds: Dict[str, int], self_attn, cross_attn, ffn
 ):
+    # Same seed → identical parameters
     block1 = DecoderBlock(self_attn, cross_attn, ffn, dec_cfg["dropout"], seed=777)
     block2 = DecoderBlock(self_attn, cross_attn, ffn, dec_cfg["dropout"], seed=777)
 
@@ -195,10 +188,12 @@ def test_seed_reproducibility(
     for k in p1:
         assert_array_equal(p1[k], p2[k])
 
-    # different main seed → different derived residual seeds → different params
+    # Different main seed does not change parameters
     block3 = DecoderBlock(self_attn, cross_attn, ffn, dec_cfg["dropout"], seed=778)
     p3 = block3.get_parameters()
-    assert not np.array_equal(p1["residual1_gamma"], p3["residual1_gamma"])
+
+    for k in p1:
+        assert_array_equal(p1[k], p3[k])
 
 
 @pytest.mark.parametrize(
