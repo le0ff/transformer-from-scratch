@@ -3,12 +3,13 @@ from typing import Dict, Optional
 import numpy as np
 from numpy import ndarray
 
+from src.layers.base import BaseLayer
 from src.layers.feedforward import FeedForwardBlock
 from src.layers.multiheadattentionblock import MultiHeadAttentionBlock
 from src.layers.residual import ResidualConnection
 
 
-class DecoderBlock:
+class DecoderBlock(BaseLayer):
     def __init__(
         self,
         self_attention_block: MultiHeadAttentionBlock,
@@ -142,25 +143,30 @@ class DecoderBlock:
 
         # Route keys by prefix
         for full_key, tensor in params.items():
-            matched = False
-            for prefix in mailboxes.keys():
-                tag = f"{prefix}_"
+            for prefix in mailboxes:
+                tag = prefix + "_"
                 if full_key.startswith(tag):
-                    mailboxes[prefix][full_key[len(tag) :]] = tensor
+                    short = full_key[len(tag) :]
+                    mailboxes[prefix][short] = tensor
                     processed.add(full_key)
-                    matched = True
                     break
-            if not matched:
+            else:
+                # no matching prefix
                 raise ValueError(f"Unrecognised parameter key: {full_key}")
 
-        # Forward to sub‑layers
+        # Dispatch into each sub‑layer
         for prefix, sub_params in mailboxes.items():
-            # Skip if no params
-            if sub_params:
+            if not sub_params:
+                continue
+            try:
                 sublayers[prefix].set_parameters(sub_params)
+            except ValueError as e:
+                raise ValueError(
+                    f"Error setting parameters for sub-layer '{prefix}': {e}"
+                ) from e
 
-        # Check if setting of parameters worked
-        if len(processed) != len(params):
+        # 3) Catch missing keys
+        if processed != set(params):
             missing = set(params) - processed
             raise ValueError(f"Missing parameters for layers: {missing}")
 
