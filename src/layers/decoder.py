@@ -81,19 +81,19 @@ class DecoderBlock(BaseLayer):
         ndarray (batch, tgt_len, d_model)
         """
         x = self.residual1(
-            x, lambda x_: self.self_attention_block(x_, x_, x_, tgt_mask)
+            x, sublayer=lambda x_: self.self_attention_block(x_, x_, x_, tgt_mask)
         )
 
         x = self.residual2(
             x,
-            lambda x_: self.cross_attention_block(
+            sublayer=lambda x_: self.cross_attention_block(
                 x_, encoder_output, encoder_output, src_mask
             ),
         )
 
-        x = self.residual3(x, self.feed_forward_block)
+        x = self.residual3(x, sublayer=self.feed_forward_block)
 
-        return x
+        return x.astype(np.float32)
 
     def get_parameters(self) -> Dict[str, np.ndarray]:
         """
