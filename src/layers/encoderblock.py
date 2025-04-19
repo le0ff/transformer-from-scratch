@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 import numpy as np
 from numpy import ndarray
@@ -87,3 +87,13 @@ class EncoderBlock(BaseLayer):
         self.feed_forward_block.eval()
         self.residual1.eval()
         self.residual2.eval()
+
+    def get_parameters(self) -> Dict[str, ndarray]:
+        """Get all parameters from sublayers, with unique prefixes."""
+        # TODO: implement this method properly
+        pass
+
+    def set_parameters(self, params: Dict[str, ndarray]) -> None:
+        """Set parameters for all sublayers, expecting unique prefixes."""
+        # TODO: implement this method properly
+        pass
