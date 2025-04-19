@@ -44,11 +44,11 @@ class MultiHeadAttentionBlock(BaseLayer):
             main_rng = np.random.default_rng(seed)
             max_seed_val = 2**31 - 1
             seeds = main_rng.integers(0, max_seed_val, size=5)
-            seed_w_q = seeds[0]
-            seed_w_k = seeds[1]
-            seed_w_v = seeds[2]
-            seed_w_o = seeds[3]
-            seed_dropout = seeds[4]
+            seed_w_q = int(seeds[0])
+            seed_w_k = int(seeds[1])
+            seed_w_v = int(seeds[2])
+            seed_w_o = int(seeds[3])
+            seed_dropout = int(seeds[4])
         else:
             seed_w_q = None
             seed_w_k = None
