@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
 import numpy as np
+from numpy import ndarray
 
 from src.layers.base import BaseLayer
 
@@ -56,7 +57,7 @@ class Linear(BaseLayer):
         # self.dW = None
         # self.db = None
 
-    def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
+    def forward(self, x: ndarray, **kwargs: Any) -> ndarray:
         """
         Forward pass through the layer.
 
@@ -82,12 +83,12 @@ class Linear(BaseLayer):
             output = output + self.b
         return output
 
-    def get_parameters(self) -> Dict[str, np.ndarray]:
+    def get_parameters(self) -> Dict[str, ndarray]:
         """
         Get the parameters of the layer.
 
         Returns:
-            Dict[str, np.ndarray]: Dictionary of parameters.
+            Dict[str, ndarray]: Dictionary of parameters.
         """
         params = {"W": self.W}
         if self.use_bias:
@@ -95,12 +96,12 @@ class Linear(BaseLayer):
             params["b"] = self.b
         return params
 
-    def set_parameters(self, params: Dict[str, np.ndarray]) -> None:
+    def set_parameters(self, params: Dict[str, ndarray]) -> None:
         """
         Set the parameters of the layer.
 
         Parameters:
-            params (Dict[str, np.ndarray]): Dictionary of parameters.
+            params (Dict[str, ndarray]): Dictionary of parameters.
         """
         # Set weights
         if "W" in params:
@@ -136,15 +137,15 @@ class Linear(BaseLayer):
                 )
             self.b = None
 
-    # def backward(self, grad_output: np.ndarray) -> np.ndarray:
+    # def backward(self, grad_output: ndarray) -> ndarray:
     #     """
     #     Computes gradients w.r.t. inputs and parameters.
 
     #     Parameters:
-    #         grad_output (np.ndarray): Gradient of the loss w.r.t. the output of this layer.
+    #         grad_output (ndarray): Gradient of the loss w.r.t. the output of this layer.
 
     #     Returns:
-    #         np.ndarray: Gradient of the loss w.r.t. the input of this layer.
+    #         ndarray: Gradient of the loss w.r.t. the input of this layer.
     #     """
     #     if self._input_cache is None:
     #         raise ValueError("No input cache found. Forward pass must be called first.")
