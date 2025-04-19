@@ -49,8 +49,8 @@ class LayerNorm(BaseLayer):
                 f"but got {x.shape[-1]}."
             )
 
-        mean = np.mean(x, axis=-1, keepdims=True)
-        variance = np.var(x, axis=-1, keepdims=True)
+        mean = np.mean(x, axis=-1, keepdims=True, dtype=np.float32)
+        variance = np.var(x, axis=-1, keepdims=True, dtype=np.float32)
         # Introduced for backprop later
         std = np.sqrt(variance + self.eps)
         x_hat = (x - mean) / np.sqrt(variance + self.eps)
@@ -60,7 +60,6 @@ class LayerNorm(BaseLayer):
         self._x_norm = x_norm
         self._mean = mean
         self._std = std
-
         return x_norm
 
     def get_parameters(self) -> Dict[str, np.ndarray]:
