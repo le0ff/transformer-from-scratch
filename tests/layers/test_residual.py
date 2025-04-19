@@ -169,3 +169,37 @@ def test_residual_forward_with_dropout(
     assert output.shape == x.shape, (
         f"Expected output shape {x.shape}, got {output.shape}"
     )
+
+
+def test_residual_train_eval(
+    residual_layer: ResidualConnection,
+) -> None:
+    """Tests train and eval modes of residual layer."""
+    # should be train mode by default
+    assert residual_layer.training is True, (
+        f"Expected training mode to be True, got {residual_layer.training}"
+    )
+
+    # Set to train mode
+    residual_layer.train()
+    assert residual_layer.training is True, (
+        f"Expected training mode to be True, got {residual_layer.training}"
+    )
+    assert residual_layer.dropout.training is True, (
+        f"Expected training mode to be True, got {residual_layer.dropout.training}"
+    )
+    assert residual_layer.layer_norm.training is True, (
+        f"Expected training mode to be True, got {residual_layer.layer_norm.training}"
+    )
+
+    # Set to eval mode
+    residual_layer.eval()
+    assert residual_layer.training is False, (
+        f"Expected training mode to be False, got {residual_layer.training}"
+    )
+    assert residual_layer.dropout.training is False, (
+        f"Expected training mode to be False, got {residual_layer.dropout.training}"
+    )
+    assert residual_layer.layer_norm.training is False, (
+        f"Expected training mode to be False, got {residual_layer.layer_norm.training}"
+    )
