@@ -6,6 +6,13 @@ from src.layers.base import BaseLayer
 
 
 class InputEmbedding(BaseLayer):
+    """
+    Input Embedding Layer for Transformer.
+
+    Maps token IDs to dense vectors and scales them by sqrt(d_model).
+    Positional encoding is applied after this layer.
+    """
+
     def __init__(
         self,
         d_model: int,
