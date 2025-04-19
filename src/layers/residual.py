@@ -9,7 +9,11 @@ from src.layers.normalization import LayerNorm
 
 class ResidualConnection(BaseLayer):
     def __init__(
-        self, normalized_shape: int, eps: Optional[float], dropout_rate: float = 0.0
+        self,
+        normalized_shape: int,
+        eps: Optional[float],
+        dropout_rate: float = 0.0,
+        seed: Optional[int] = None,
     ) -> None:
         """
         Initializes ResidualConnection layer.
@@ -18,7 +22,13 @@ class ResidualConnection(BaseLayer):
             dropout_rate (float): Dropout rate for the layer.
         """
         super().__init__()
-        self.dropout = Dropout(dropout_rate)
+
+        if dropout_rate < 0.0 or dropout_rate > 1.0:
+            raise ValueError("Dropout rate must be between 0 and 1.")
+        if seed is not None and not isinstance(seed, int):
+            raise ValueError("Seed must be an integer.")
+
+        self.dropout = Dropout(dropout_rate, seed=seed)
         self.layer_norm = LayerNorm(normalized_shape=normalized_shape, eps=eps)
 
     def forward(self, x: ndarray, sublayer: BaseLayer) -> ndarray:
