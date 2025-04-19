@@ -1,11 +1,10 @@
-# from typing import Any
+from typing import Dict
 
 import numpy as np
 import pytest
+from numpy import ndarray
 
 from src.layers.linear import Linear
-
-# from numpy import ndarray
 from src.layers.residual import ResidualConnection
 
 
@@ -203,3 +202,45 @@ def test_residual_train_eval(
     assert residual_layer.layer_norm.training is False, (
         f"Expected training mode to be False, got {residual_layer.layer_norm.training}"
     )
+
+
+def test_residual_get_parameters(residual_layer: ResidualConnection) -> None:
+    """Test get_parameters returns correct keys and values."""
+    params = residual_layer.get_parameters()
+    assert set(params.keys()) == {"layernorm_gamma", "layernorm_beta"}
+    np.testing.assert_array_equal(
+        params["layernorm_gamma"], residual_layer.layer_norm.gamma
+    )
+    np.testing.assert_array_equal(
+        params["layernorm_beta"], residual_layer.layer_norm.beta
+    )
+
+
+def test_residual_set_parameters_valid(residual_layer: ResidualConnection) -> None:
+    """Test set_parameters correctly updates LayerNorm parameters."""
+    new_gamma = np.ones_like(residual_layer.layer_norm.gamma) * 2
+    new_beta = np.ones_like(residual_layer.layer_norm.beta) * 3
+    params = {"layernorm_gamma": new_gamma, "layernorm_beta": new_beta}
+    residual_layer.set_parameters(params)
+    np.testing.assert_array_equal(residual_layer.layer_norm.gamma, new_gamma)
+    np.testing.assert_array_equal(residual_layer.layer_norm.beta, new_beta)
+
+
+@pytest.mark.parametrize(
+    "params, error_msg",
+    [
+        ({"layernorm_gamma": np.ones(10)}, "Missing LayerNorm parameters"),
+        ({"layernorm_beta": np.ones(10)}, "Missing LayerNorm parameters"),
+        (
+            {"layernorm_gamma": np.ones(10), "extra_param": np.ones(10)},
+            "Unexpected parameter keys",
+        ),
+        ({}, "No parameters found for LayerNorm"),
+    ],
+)
+def test_residual_set_parameters_invalid(
+    residual_layer: ResidualConnection, params: Dict[str, ndarray], error_msg
+) -> None:
+    """Test set_parameters raises errors for invalid input."""
+    with pytest.raises(ValueError, match=error_msg):
+        residual_layer.set_parameters(params)

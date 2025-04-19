@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 from numpy import ndarray
 
@@ -55,3 +55,43 @@ class ResidualConnection(BaseLayer):
         super().eval()
         self.dropout.eval()
         self.layer_norm.eval()
+
+    def get_parameters(self) -> Dict[str, ndarray]:
+        """
+        Get parameters of the ResidualConnection layer, namespaced by sublayer.
+        Returns:
+            dict: Dictionary with keys like 'layernorm_gamma', 'layernorm_beta'.
+        """
+        params = {}
+        layer_norm_params = self.layer_norm.get_parameters()
+        for name, param in layer_norm_params.items():
+            params[f"layernorm_{name}"] = param
+
+        return params
+
+    def set_parameters(self, params: Dict[str, ndarray]) -> None:
+        """
+        Set parameters for the ResidualConnection layer, expecting namespaced keys.
+        Parameters:
+            params (dict): Dictionary with keys like 'layernorm_gamma', 'layernorm_beta'.
+        """
+        layernorm_params = {}
+        unexpected_keys = []
+        for key, value in params.items():
+            if key.startswith("layernorm_"):
+                param_name = key[len("layernorm_") :]
+                layernorm_params[param_name] = value
+            else:
+                unexpected_keys.append(key)
+        if unexpected_keys:
+            raise ValueError(
+                f"Unexpected parameter keys for ResidualConnection: {unexpected_keys}"
+            )
+        if not layernorm_params:
+            raise ValueError("No parameters found for LayerNorm in ResidualConnection.")
+        # additonal check if layernorm_params has all required keys
+        required = {"gamma", "beta"}
+        missing = required - set(layernorm_params.keys())
+        if missing:
+            raise ValueError(f"Missing LayerNorm parameters: {missing}")
+        self.layer_norm.set_parameters(layernorm_params)
