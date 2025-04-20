@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal
 # --------------------------------------------------------------------------- #
 # Imports from your code-base (adjust paths if needed)
 # --------------------------------------------------------------------------- #
-from src.layers.decoder import DecoderBlock
+from src.layers.decoderblock import DecoderBlock
 from src.layers.feedforward import FeedForwardBlock
 from src.layers.multiheadattentionblock import MultiHeadAttentionBlock
 
