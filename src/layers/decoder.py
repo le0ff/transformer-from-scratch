@@ -93,7 +93,6 @@ class DecoderBlock(BaseLayer):
 
         x = self.residual3(x, sublayer=self.feed_forward_block)
 
-        # return x.astype(np.float32)
         return x
 
     def get_parameters(self) -> Dict[str, np.ndarray]:

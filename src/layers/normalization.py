@@ -29,8 +29,8 @@ class LayerNorm(BaseLayer):
         self.normalized_shape = normalized_shape
         self.eps = eps
         # default values for adaptive gain and bias as described in the paper
-        self.gamma = np.ones((normalized_shape,), dtype=np.float32)
-        self.beta = np.zeros((normalized_shape,), dtype=np.float32)
+        self.gamma = np.ones((normalized_shape,))
+        self.beta = np.zeros((normalized_shape,))
 
     def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
         """
@@ -49,8 +49,8 @@ class LayerNorm(BaseLayer):
                 f"but got {x.shape[-1]}."
             )
 
-        mean = np.mean(x, axis=-1, keepdims=True, dtype=np.float32)
-        variance = np.var(x, axis=-1, keepdims=True, dtype=np.float32)
+        mean = np.mean(x, axis=-1, keepdims=True)
+        variance = np.var(x, axis=-1, keepdims=True)
         # Introduced for backprop later
         std = np.sqrt(variance + self.eps)
         x_hat = (x - mean) / np.sqrt(variance + self.eps)

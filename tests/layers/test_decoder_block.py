@@ -91,8 +91,8 @@ def sample_inputs(dec_cfg: Dict) -> Dict[str, np.ndarray]:
     d_model = dec_cfg["d_model"]
     n_heads = dec_cfg["n_heads"]
 
-    x = rng.standard_normal((batch, tgt_len, d_model)).astype(np.float32)
-    enc_out = rng.standard_normal((batch, src_len, d_model)).astype(np.float32)
+    x = rng.standard_normal((batch, tgt_len, d_model)).astype(np.float64)
+    enc_out = rng.standard_normal((batch, src_len, d_model)).astype(np.float64)
 
     # causal mask broadcast to heads (batch, heads, tgt_len, tgt_len)
     causal_base = np.tril(np.ones((tgt_len, tgt_len), bool))
@@ -115,7 +115,7 @@ def test_forward_shape(decoder_block: DecoderBlock, sample_inputs: Dict, dec_cfg
         sample_inputs["src_mask"],
     )
     assert y.shape == sample_inputs["x"].shape
-    assert y.dtype == np.float32
+    assert y.dtype == np.float64
 
 
 def test_train_eval_propagation(decoder_block: DecoderBlock):
