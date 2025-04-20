@@ -63,37 +63,70 @@ class EncoderBlock(BaseLayer):
             normalized_shape=d_model, eps=eps, dropout_rate=dropout, seed=seed_residual2
         )
 
+        self._layers = {
+            "self_attention": self.self_attention_block,
+            "feed_forward": self.feed_forward_block,
+            "residual1": self.residual1,
+            "residual2": self.residual2,
+        }
+
     def forward(self, x: ndarray, mask: ndarray) -> ndarray:
         """
         Forward pass through the encoder block.
 
         """
-        x = self.residual1(x, lambda x: self.self_attention_block(x, x, x, mask))
-        x = self.residual2(x, self.feed_forward_block)
+        x = self.residual1(
+            x, sublayer=lambda x: self.self_attention_block(x, x, x, mask)
+        )
+        x = self.residual2(x, sublayer=self.feed_forward_block)
         return x
 
     def train(self) -> None:
         """Set block to training mode."""
         super().train()
-        self.self_attention_block.train()
-        self.feed_forward_block.train()
-        self.residual1.train()
-        self.residual2.train()
+        for layer in self._layers.values():
+            layer.train()
 
     def eval(self) -> None:
         """Set block to evaluation mode."""
         super().eval()
-        self.self_attention_block.eval()
-        self.feed_forward_block.eval()
-        self.residual1.eval()
-        self.residual2.eval()
+        for layer in self._layers.values():
+            layer.eval()
 
     def get_parameters(self) -> Dict[str, ndarray]:
         """Get all parameters from sublayers, with unique prefixes."""
-        # TODO: implement this method properly
-        pass
+        params = {}
+        for name, layer in self._layers.items():
+            sub_params = layer.get_parameters()
+            for key, value in sub_params.items():
+                params[f"{name}_{key}"] = value
+        return params
 
     def set_parameters(self, params: Dict[str, ndarray]) -> None:
         """Set parameters for all sublayers, expecting unique prefixes."""
-        # TODO: implement this method properly
-        pass
+        # Prepare a dict for each sublayer
+        sublayer_param_dicts = {name: {} for name in self._layers}
+        processed_keys = set()
+
+        # Distribute parameters to the correct sublayer dict
+        for key, value in params.items():
+            matched = False
+            for sublayer in self._layers:
+                prefix = f"{sublayer}_"
+                if key.startswith(prefix):
+                    sublayer_param_dicts[sublayer][key[len(prefix) :]] = value
+                    processed_keys.add(key)
+                    matched = True
+                    break
+            if not matched:
+                raise ValueError(f"Unexpected parameter key for EncoderBlock: {key}")
+
+        # Set parameters for each sublayer
+        for sublayer, sub_params in sublayer_param_dicts.items():
+            if sub_params:  # Only set if there are parameters
+                self._layers[sublayer].set_parameters(sub_params)
+
+        # Check for missing keys
+        if len(processed_keys) != len(params):
+            missing = set(params.keys()) - processed_keys
+            raise ValueError(f"Some parameters were not processed: {missing}")
