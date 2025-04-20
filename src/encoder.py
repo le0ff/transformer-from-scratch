@@ -1,8 +1,12 @@
-from typing import Dict
+from typing import Dict, Optional
 
+import numpy as np
 from numpy import ndarray
 
 from src.layers.base import BaseLayer
+from src.layers.encoderblock import EncoderBlock
+from src.layers.feedforward import FeedForwardBlock
+from src.layers.multiheadattentionblock import MultiHeadAttentionBlock
 from src.layers.normalization import LayerNorm
 
 
@@ -26,6 +30,59 @@ class Encoder(BaseLayer):
         # Use d_model from the first encoder block for the output LayerNorm
         first_block = next(iter(layers.values()))
         self.norm = LayerNorm(first_block.self_attention_block.d_model)
+
+    @classmethod
+    def from_config(
+        cls,
+        d_model: int,
+        n_heads: int,
+        d_ff: int,
+        dropout: float,
+        num_blocks: int,
+        seed: Optional[int] = None,
+    ) -> "Encoder":
+        """
+        Alternate constructor to build an Encoder from config.
+
+        Parameters:
+            d_model (int): Model dimension.
+            n_heads (int): Number of attention heads.
+            d_ff (int): Feedforward dimension.
+            dropout (float): Dropout rate.
+            num_blocks (int): Number of encoder blocks.
+            seed (Optional[int]): Seed for reproducibility.
+
+        Returns:
+            Encoder: An initialized Encoder instance.
+        """
+
+        main_rng = np.random.default_rng(seed)
+        max_seed_val = 2**31 - 1
+        layers = {}
+        for i in range(num_blocks):
+            seeds = main_rng.integers(0, max_seed_val, size=3)
+            attn_seed = int(seeds[0])
+            ff_seed = int(seeds[1])
+            block_seed = int(seeds[2])
+            attn = MultiHeadAttentionBlock(
+                d_model=d_model,
+                n_heads=n_heads,
+                dropout_rate=dropout,
+                seed=attn_seed,
+            )
+            ff = FeedForwardBlock(
+                d_model=d_model,
+                d_ff=d_ff,
+                dropout=dropout,
+                seed=ff_seed,
+            )
+            layers[f"block{i}"] = EncoderBlock(
+                self_attention_block=attn,
+                feed_forward_block=ff,
+                dropout=dropout,
+                seed=block_seed,
+            )
+        return cls(layers=layers)
 
     def forward(self, x: ndarray, mask: ndarray) -> ndarray:
         """
