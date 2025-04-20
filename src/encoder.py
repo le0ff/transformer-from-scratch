@@ -23,8 +23,9 @@ class Encoder(BaseLayer):
         super().__init__()
         # dictionary of encoder blocks, e.g. {"encoder_block_1": EncoderBlock(...), ...}
         self.layers = layers
-        # LayerNormalization, using the d_model of the first encoder block
-        self.norm = LayerNorm(layers.values()[0].d_model)
+        # Use d_model from the first encoder block for the output LayerNorm
+        first_block = next(iter(layers.values()))
+        self.norm = LayerNorm(first_block.self_attention_block.d_model)
 
     def forward(self, x: ndarray, mask: ndarray) -> ndarray:
         """
@@ -38,7 +39,7 @@ class Encoder(BaseLayer):
             ndarray: Output data after passing through the encoder.
         """
         for layer in self.layers.values():
-            x = layer(x, mask)
+            x = layer(x, mask=mask)
         return self.norm(x)
 
     def train(self) -> None:
