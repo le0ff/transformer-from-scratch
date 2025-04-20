@@ -165,7 +165,7 @@ class DecoderBlock(BaseLayer):
                     f"Error setting parameters for sub-layer '{prefix}': {e}"
                 ) from e
 
-        # 3) Catch missing keys
+        # Catch missing keys
         if processed != set(params):
             missing = set(params) - processed
             raise ValueError(f"Missing parameters for layers: {missing}")
