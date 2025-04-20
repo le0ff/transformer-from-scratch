@@ -70,6 +70,9 @@ class Encoder(BaseLayer):
 
     def set_parameters(self, params: Dict[str, ndarray]) -> None:
         """Set parameters for the encoder, expecting namespaced keys."""
+        if not params:
+            raise ValueError("No parameters provided for Encoder.")
+
         # Prepare dicts for each block and for norm
         block_param_dicts = {name: {} for name in self.layers}
         norm_param_dict = {}

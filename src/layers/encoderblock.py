@@ -104,6 +104,9 @@ class EncoderBlock(BaseLayer):
 
     def set_parameters(self, params: Dict[str, ndarray]) -> None:
         """Set parameters for all sublayers, expecting unique prefixes."""
+        if not params:
+            raise ValueError("No parameters provided for EncoderBlock.")
+
         # Prepare a dict for each sublayer
         sublayer_param_dicts = {name: {} for name in self._layers}
         processed_keys = set()
