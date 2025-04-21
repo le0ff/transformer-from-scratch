@@ -86,6 +86,7 @@ TODO: ADD INSTRUCTIONS ON HOW TO RUN FORWARD PASS
 As of the current state, the project has achieved the following:
 - **Modular Implementation:** Core Transformer layers are implemented as distinct modules inheriting from a abstract base class `BaseLayer`.
 - **NumPy Core:** All computations and formulas are implemented  solely using NumPy.
+- **Random Initialization & Reproducibility:** All components that require randomness use independent NumPy random number generators. If a seed is provided, initialization and all stochastic operations are fully reproducible: subcomponents deterministically derive their own seeds from the main seed, ensuring independent but repeatable results. If no seed is given, initialization is random. This approach avoids global side effects from `np.random.seed()` and ensures reproducibility without interfering with other code.
 - **Functional Forward Pass:** The primary focus has been on ensuring the forward pass of the implemented layers and the overall Transformer architecture works correctly (i.e., produces outputs of the expected shapes and types), while gaining deep understanding of the Transformer architecture, grasp what the single components do under the hood, and how they work together, as a full pipeline.
 - **Unit Tests:** Tests for initialization and functionality of several components are available.
 
