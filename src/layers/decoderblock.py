@@ -30,8 +30,8 @@ class DecoderBlock(BaseLayer):
         """
         super().__init__()
 
-        if not (0.0 <= dropout < 1.0):
-            raise ValueError("dropout must be in [0.0, 1.0).")
+        if not isinstance(dropout, (int, float)) or not (0.0 <= dropout < 1.0):
+            raise ValueError("Dropout must be a float in [0.0, 1.0).")
         if seed is not None and not isinstance(seed, int):
             raise ValueError("seed must be an int or None.")
 
@@ -145,7 +145,7 @@ class DecoderBlock(BaseLayer):
                     break
             else:
                 # no matching prefix
-                raise ValueError(f"Unrecognised parameter key: {full_key}")
+                raise ValueError(f"Unexpected parameter key: {full_key}")
 
         # Dispatch into each sub‑layer
         for prefix, sub_params in mailboxes.items():
