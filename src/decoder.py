@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import numpy as np
 from numpy import ndarray
@@ -15,17 +15,17 @@ class Decoder(BaseLayer):
     Transformer Decoder consisting of a sequence of Decoder blocks.
     """
 
-    def __init__(self, layers: List[BaseLayer]) -> None:
+    def __init__(self, layers: Dict[str, BaseLayer]) -> None:
         """
         Initializes the Decoder.
 
         Parameters:
-            layers (List[BaseLayer]): List of Decoder blocks in order.
+            layers (Dict[str, BaseLayer]): Dictionary of layers in the decoder (in sequential order).
         """
         super().__init__()
         self.layers = layers
         # Use d_model from first decoder block to initialize final normalization
-        first_block = layers[0]
+        first_block = next(iter(layers.values()))
         self.norm = LayerNorm(first_block.self_attention_block.d_model)
 
     @classmethod
@@ -54,9 +54,9 @@ class Decoder(BaseLayer):
         """
         main_rng = np.random.default_rng(seed)
         max_seed_val = 2**31 - 1
-        layers = []
+        layers = {}
 
-        for _ in range(num_blocks):
+        for i in range(num_blocks):
             seeds = main_rng.integers(0, max_seed_val, size=4)
             self_attn_seed = int(seeds[0])
             cross_attn_seed = int(seeds[1])
@@ -82,14 +82,13 @@ class Decoder(BaseLayer):
                 seed=ff_seed,
             )
 
-            block = DecoderBlock(
+            layers[f"block{i}"] = DecoderBlock(
                 self_attention_block=self_attn,
                 cross_attention_block=cross_attn,
                 feed_forward_block=ff,
                 dropout=dropout,
                 seed=block_seed,
             )
-            layers.append(block)
 
         return cls(layers=layers)
 
@@ -112,7 +111,7 @@ class Decoder(BaseLayer):
         Returns:
             ndarray: Output from the decoder.
         """
-        for layer in self.layers:
+        for layer in self.layers.values():
             x = layer(
                 x, encoder_output=encoder_output, tgt_mask=tgt_mask, src_mask=src_mask
             )
@@ -121,24 +120,25 @@ class Decoder(BaseLayer):
     def train(self) -> None:
         """Set decoder and submodules to training mode."""
         super().train()
-        for layer in self.layers:
+        for layer in self.layers.values():
             layer.train()
         self.norm.train()
 
     def eval(self) -> None:
         """Set decoder and submodules to evaluation mode."""
         super().eval()
-        for layer in self.layers:
+        for layer in self.layers.values():
             layer.eval()
         self.norm.eval()
 
     def get_parameters(self) -> Dict[str, ndarray]:
         """Get all parameters from the decoder, namespaced by layer and sublayer."""
         params = {}
-        for idx, layer in enumerate(self.layers):
-            layer_params = layer.get_parameters()
-            for key, value in layer_params.items():
-                params[f"layer{idx}_{key}"] = value
+        for block_name, block in self.layers.items():
+            block_params = block.get_parameters()
+            for key, value in block_params.items():
+                params[f"{block_name}_{key}"] = value
+        # Add LayerNorm parameters for the encoder output norm
         norm_params = self.norm.get_parameters()
         for key, value in norm_params.items():
             params[f"norm_{key}"] = value
@@ -149,33 +149,38 @@ class Decoder(BaseLayer):
         if not params:
             raise ValueError("No parameters provided for Decoder.")
 
-        processed_keys = set()
-        layer_param_dicts = [{} for _ in self.layers]
+        # Prepare dicts for each block and for norm
+        block_param_dicts = {name: {} for name in self.layers}
         norm_param_dict = {}
+        processed_keys = set()
 
         for key, value in params.items():
-            if key.startswith("layer"):
-                parts = key.split("_", 1)
-                if len(parts) != 2 or not parts[0][5:].isdigit():
-                    raise ValueError(f"Invalid layer key format: {key}")
-                idx = int(parts[0][5:])
-                if idx >= len(self.layers):
-                    raise ValueError(f"Layer index out of range: {idx}")
-                layer_param_dicts[idx][parts[1]] = value
-                processed_keys.add(key)
-            elif key.startswith("norm_"):
+            matched = False
+            # Check if key belongs to a block
+            for block_name in self.layers:
+                prefix = f"{block_name}_"
+                if key.startswith(prefix):
+                    block_param_dicts[block_name][key[len(prefix) :]] = value
+                    processed_keys.add(key)
+                    matched = True
+                    break
+            # Check if key belongs to norm
+            if not matched and key.startswith("norm_"):
                 norm_param_dict[key[len("norm_") :]] = value
                 processed_keys.add(key)
-            else:
+                matched = True
+            if not matched:
                 raise ValueError(f"Unexpected parameter key for Decoder: {key}")
 
-        for idx, layer_params in enumerate(layer_param_dicts):
-            if layer_params:
-                self.layers[idx].set_parameters(layer_params)
-
+        # Set parameters for each block
+        for block_name, block_params in block_param_dicts.items():
+            if block_params:
+                self.layers[block_name].set_parameters(block_params)
+        # Set parameters for norm
         if norm_param_dict:
             self.norm.set_parameters(norm_param_dict)
 
-        if processed_keys != set(params):
-            missing = set(params) - processed_keys
+        # Check for missing keys
+        if len(processed_keys) != len(params):
+            missing = set(params.keys()) - processed_keys
             raise ValueError(f"Some parameters were not processed: {missing}")

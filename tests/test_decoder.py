@@ -68,19 +68,19 @@ def test_decoder_forward_shape(
 def test_decoder_train_eval_propagation(decoder: Decoder) -> None:
     """Test train/eval mode propagates to all blocks and norm."""
     assert decoder.training is True
-    for block in decoder.layers:
+    for block in decoder.layers.values():
         assert block.training is True
     assert decoder.norm.training is True
 
     decoder.eval()
     assert decoder.training is False
-    for block in decoder.layers:
+    for block in decoder.layers.values():
         assert block.training is False
     assert decoder.norm.training is False
 
     decoder.train()
     assert decoder.training is True
-    for block in decoder.layers:
+    for block in decoder.layers.values():
         assert block.training is True
     assert decoder.norm.training is True
 
@@ -89,9 +89,9 @@ def test_decoder_get_parameters_keys(decoder: Decoder) -> None:
     """Test get_parameters returns all expected keys with correct prefixes."""
     params = decoder.get_parameters()
     expected_keys = set()
-    for idx, layer in enumerate(decoder.layers):
+    for name, layer in decoder.layers.items():
         for subkey in layer.get_parameters():
-            expected_keys.add(f"layer{idx}_{subkey}")
+            expected_keys.add(f"{name}_{subkey}")
     for key in decoder.norm.get_parameters():
         expected_keys.add(f"norm_{key}")
     assert set(params.keys()) == expected_keys
@@ -112,12 +112,11 @@ def test_decoder_get_set_parameters_roundtrip(decoder: Decoder) -> None:
     [
         ({"not_a_real_param": np.ones((2, 2))}, "Unexpected parameter key"),
         ({}, "No parameters provided for Decoder"),
-        ({"layer999_invalid": np.ones((2, 2))}, "Layer index out of range"),
-        ({"layerX_something": np.ones((2, 2))}, "Invalid layer key format"),
+        ({"block999_invalid": np.ones((2, 2))}, "Unexpected parameter key"),
         (
             {
-                "layer0_self_attention_w_q": np.ones((2, 2)),
-                "layer1_feed_forward_w_o": np.ones((2, 2)),
+                "block0_self_attention_w_q": np.ones((2, 2)),
+                "block1_feed_forward_w_o": np.ones((2, 2)),
             },
             "Expected 4 parameters: 'w_q', 'w_k', 'w_v', and 'w_o'",
         ),
