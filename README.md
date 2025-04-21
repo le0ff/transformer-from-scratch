@@ -28,8 +28,8 @@ The initial objective was to build a character-level Transformer capable of lear
 We adopted a modular design approach:
 
 1.  **NumPy Exclusivity (Initial Focus):** All mathematical operations and tensor manipulations are handled purely by NumPy. This was a deliberate choice to focus on the fundamental algorithms without framework abstractions.
-2.  **Modular Components:** The Transformer architecture is broken down into its fundamental building blocks (e.g., Multi-Head Attention, Feed-Forward Blocks, InputEmbeddings &Positional Encoding).
-3.  **Base Layer:** A `BaseLayer` class (`src/layers/base.py`) was created, serving as an abstract parent class for all components. Each specific layer (e.g., `Linear`, `Softmax`, `MultiHeadAttentionBlock`) inherits from this base, ensuring a consistent interface, so all layers have or override methods such as `forward`, `get_parameters`, `set_parameters`, toggles for `train`/`eval` and a potential `backward`.
+2.  **Modular Components:** The Transformer architecture is broken down into its fundamental building blocks (e.g., Multi-Head Attention, Feed-Forward Blocks, InputEmbeddings, Positional Encoding, ...).
+3.  **Base Layer:** A `BaseLayer` class (`src/layers/base.py`) was created, serving as an abstract parent class for all components. Each specific layer (e.g., `Linear`, `Softmax`, `MultiHeadAttentionBlock`) inherits from this base, ensuring a consistent interface, so all layers have or override methods such as `forward`, `get_parameters`, `set_parameters`, toggles for `train`/`eval` and a planned `backward`.
 4.  **Character-Level Focus:** The intended application was simplified to character-level tasks to manage complexity.
 5.  **Consideration of JAX:** While sticking to NumPy for the initial implementation, we acknowledged its potential performance limitations, especially for larger models or datasets. We considered using [JAX](https://github.com/google/jax) as a potential alternative. JAX offers a NumPy-like API but includes benefits like Just-In-Time (JIT) compilation for significant speedups on accelerators (GPUs/TPUs) and powerful automatic differentiation capabilities (`jax.grad`). However, to maximize focus on the manual implementation details first, we deferred a potential JAX integration, and instead focused on the modular NumPy-only implementation.
 
@@ -84,13 +84,13 @@ TODO: ADD INSTRUCTIONS ON HOW TO RUN FORWARD PASS
 **Project Deadline:** April 25th, 5:00 PM CET
 
 As of the current state, the project has achieved the following:
-- **Modular Implementation:** Core Transformer layers are implemented as distinct modules inherinting from a abstract base class `BaseLayer`.
+- **Modular Implementation:** Core Transformer layers are implemented as distinct modules inheriting from a abstract base class `BaseLayer`.
 - **NumPy Core:** All computations and formulas are implemented  solely using NumPy.
-- **Functional Forward Pass:** The primary focus has been on ensuring the forward pass of the implemented layers and the overall Transformer architecture works correctly (i.e., produces outputs of the expected shapes and types), while gaining deep unerstanding of the Transformer architecture, what the single components do under the hood, and how they work together, as a full pipeline.
+- **Functional Forward Pass:** The primary focus has been on ensuring the forward pass of the implemented layers and the overall Transformer architecture works correctly (i.e., produces outputs of the expected shapes and types), while gaining deep understanding of the Transformer architecture, grasp what the single components do under the hood, and how they work together, as a full pipeline.
 - **Unit Tests:** Tests for initialization and functionality of several components are available.
 
 ### Limitations:
-- **Backward Pass:** The `backward` pass for gradient computation is incomplete or only sketched for most layers at the moment. It has not been fully implemented or tested due to time constraints.
+- **Backward Pass:** The `backward` pass for gradient computation is incomplete/only sketched for most layers at the moment. It has not been fully implemented or tested due to time constraints.
 - **Training:** There is no training loop, optimizer, or loss function implemented. The model cannot be trained on any task yet.
 - **Performance:** The pure NumPy implementation is not optimized for speed and can be slow compared to framework-based implementations or JIT-compiled code.
 - **Task Execution:** The model has not been demonstrated on the target character-level tasks (identity, reverse).
@@ -103,7 +103,7 @@ Given more time, the following steps would be priorities:
 3. **Develop NumPy Training Loop:** Create a script to handle data loading, batching, forward/backward pass, and weight updates using the pure NumPy components.
 4. **Train and Evaluate (NumPy):** Train the NumPy model on the identity and reverse string tasks and evaluate its performance.
 5. **Refactor and Port to JAX:**
-    - Refactor the existing NumPy codebase to be compatible with JAX (potentially shift from OOP, module-based paradigm to rather functional paradigm).
+    - Refactor the existing NumPy codebase to be compatible with JAX (shift from OOP, module-based paradigm to rather functional paradigm, if necessary).
     - Leverage `jax.jit` to accelerate computations significantly.
     - Replace the manual backward pass implementation with JAX's automatic differentiation (`jax.grad`) for potentially simpler and more robust gradient calculations.
     - Compare the performance and development experience of the JAX version against the NumPy version.
