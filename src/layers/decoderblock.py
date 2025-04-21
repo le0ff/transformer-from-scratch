@@ -63,6 +63,15 @@ class DecoderBlock(BaseLayer):
             normalized_shape=d_model, eps=eps, dropout_rate=dropout, seed=seed_residual3
         )
 
+        self._layers = {
+            "self_attention": self.self_attention_block,
+            "cross_attention": self.cross_attention_block,
+            "feed_forward": self.feed_forward_block,
+            "residual1": self.residual1,
+            "residual2": self.residual2,
+            "residual3": self.residual3,
+        }
+
     def forward(
         self, x: ndarray, encoder_output: ndarray, tgt_mask: ndarray, src_mask: ndarray
     ) -> ndarray:
@@ -100,24 +109,14 @@ class DecoderBlock(BaseLayer):
         Return *one flat dict* whose keys are prefixed with the sub‑layer name followed by “_”.
         Sub‑layers that expose no parameters are silently skipped.
         """
-        param_dict: Dict[str, np.ndarray] = {}
+        params = {}
 
-        # name → attribute mapping
-        sublayers = {
-            "self_attn": self.self_attention_block,
-            "cross_attn": self.cross_attention_block,
-            "ff": self.feed_forward_block,
-            "residual1": self.residual1,
-            "residual2": self.residual2,
-            "residual3": self.residual3,
-        }
-
-        for prefix, layer in sublayers.items():
+        for prefix, layer in self._layers.items():
             sub_p = layer.get_parameters()
             for k, v in sub_p.items():
-                param_dict[f"{prefix}_{k}"] = v
+                params[f"{prefix}_{k}"] = v
 
-        return param_dict
+        return params
 
     def set_parameters(self, params: Dict[str, np.ndarray]) -> None:
         """
@@ -126,18 +125,12 @@ class DecoderBlock(BaseLayer):
         Each key must start with a recognised prefix; the remainder of the
         key is forwarded to the corresponding sub‑layer’s `set_parameters`.
         """
+        if not params:
+            raise ValueError("No parameters provided for DecoderBlock.")
+
         # Build empty mail‑boxes for every sub‑layer that owns params
-        sublayers = {
-            "self_attn": self.self_attention_block,
-            "cross_attn": self.cross_attention_block,
-            "ff": self.feed_forward_block,
-            "residual1": self.residual1,
-            "residual2": self.residual2,
-            "residual3": self.residual3,
-        }
-        mailboxes = {
-            name: {} for name, layer in sublayers.items() if layer.get_parameters()
-        }
+
+        mailboxes = {name: {} for name in self._layers}
 
         processed: set[str] = set()
 
@@ -159,7 +152,7 @@ class DecoderBlock(BaseLayer):
             if not sub_params:
                 continue
             try:
-                sublayers[prefix].set_parameters(sub_params)
+                self._layers[prefix].set_parameters(sub_params)
             except ValueError as e:
                 raise ValueError(
                     f"Error setting parameters for sub-layer '{prefix}': {e}"
@@ -173,19 +166,11 @@ class DecoderBlock(BaseLayer):
     def train(self) -> None:
         """Put block and all sub‑modules into training mode."""
         super().train()
-        self.self_attention_block.train()
-        self.cross_attention_block.train()
-        self.feed_forward_block.train()
-        self.residual1.train()
-        self.residual2.train()
-        self.residual3.train()
+        for layer in self._layers.values():
+            layer.train()
 
     def eval(self) -> None:
         """Put block and all sub‑modules into eval mode."""
         super().eval()
-        self.self_attention_block.eval()
-        self.cross_attention_block.eval()
-        self.feed_forward_block.eval()
-        self.residual1.eval()
-        self.residual2.eval()
-        self.residual3.eval()
+        for layer in self._layers.values():
+            layer.eval()

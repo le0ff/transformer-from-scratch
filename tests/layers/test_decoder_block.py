@@ -199,7 +199,7 @@ def test_seed_reproducibility(
 @pytest.mark.parametrize(
     "bad_params, err_msg",
     [
-        ({"self_attn_w_q": np.zeros((1, 1))}, "Error setting parameters"),
+        ({"self_attention_w_q": np.zeros((1, 1))}, "Error setting parameters"),
         ({"unknownkey": np.zeros(1)}, "Unrecognised parameter key"),
     ],
     ids=["wrong_shape", "unknown_prefix"],
