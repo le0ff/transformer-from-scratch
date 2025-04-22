@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 from numpy import ndarray
 
+from src.layers.activations.softmax import Softmax
 from src.layers.base import BaseLayer
 from src.layers.linear import Linear
 
@@ -28,6 +29,7 @@ class ProjectionLayer(BaseLayer):
         self.d_model = d_model
         self.vocab_size = vocab_size
         self.linear = Linear(d_model, vocab_size, use_bias=True, seed=seed)
+        self.softmax = Softmax(axis=-1)
 
     def forward(self, x: ndarray, **kwargs: Any) -> ndarray:
         """
@@ -39,12 +41,12 @@ class ProjectionLayer(BaseLayer):
         Returns:
         ndarray: Log-probabilities (..., vocab_size).
         """
+        # apply linear transformation
         logits = self.linear(x)
-
-        max_logits = np.max(logits, axis=-1, keepdims=True)
-        shifted = logits - max_logits
-        log_sum_exp = np.log(np.sum(np.exp(shifted), axis=-1, keepdims=True))
-        log_probs = shifted - log_sum_exp
+        # compute softmax probabilities
+        softmax_probs = self.softmax(logits)
+        # compute log-probabilities
+        log_probs = np.log(softmax_probs + 1e-10)
         return log_probs
 
     def train(self) -> None:

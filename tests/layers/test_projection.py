@@ -135,3 +135,34 @@ def test_projection_train_eval_modes(proj_layer: ProjectionLayer) -> None:
     proj_layer.train()
     assert proj_layer.training
     assert proj_layer.linear.training
+
+
+@pytest.mark.parametrize(
+    "input_fixture",
+    ["sample_input_2d", "sample_input_3d"],
+    ids=["2D_Input", "3D_Input"],
+)
+def test_projection_logsoftmax_equivalence(
+    proj_layer: ProjectionLayer,
+    request: pytest.FixtureRequest,
+    input_fixture: str,
+) -> None:
+    """Verify forward() matches manual numerically stable log-softmax."""
+    input_data = request.getfixturevalue(input_fixture)
+    # Output from the layer
+    out_logsoftmax = proj_layer.forward(input_data)
+
+    # Manual log-softmax, as implemented before adjusting forward of projection layer
+    logits = proj_layer.linear(input_data)
+    max_logits = np.max(logits, axis=-1, keepdims=True)
+    shifted = logits - max_logits
+    log_sum_exp = np.log(np.sum(np.exp(shifted), axis=-1, keepdims=True))
+    manual_log_probs = shifted - log_sum_exp
+    # Compare
+    np.testing.assert_allclose(
+        out_logsoftmax,
+        manual_log_probs,
+        atol=1e-6,
+        rtol=1e-6,
+        err_msg=f"forward() and manual log-softmax differ for {input_fixture}",
+    )
