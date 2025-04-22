@@ -1,14 +1,11 @@
 import numpy as np
 import pytest
 from numpy import ndarray
-from numpy.testing import assert_allclose
 
 from src.layers.embeddings.input_embedding import InputEmbedding
 from src.layers.embeddings.positional_encoding import PositionalEncoding
 
-# -----------------------------
-# Fixtures
-# -----------------------------
+# --- Fixtures ---
 
 
 @pytest.fixture
@@ -52,9 +49,7 @@ def pos_encoding_layer(d_model: int, seq_len: int) -> PositionalEncoding:
     return PositionalEncoding(d_model=d_model, max_len=seq_len, dropout_rate=0.0)
 
 
-# -----------------------------
-# Tests
-# -----------------------------
+# --- Tests ---
 
 
 def test_embedding_output_shape(
@@ -82,7 +77,7 @@ def test_positional_encoding_changes_values(
     embedded = embedding_layer.forward(token_input)
     encoded = pos_encoding_layer.forward(embedded)
     # Positional encoding should change at least some values
-    assert_allclose(encoded, embedded)
+    assert not np.allclose(encoded, embedded)
 
 
 def test_no_nans_in_output(
@@ -104,4 +99,5 @@ def test_value_range_of_encoded_output(
     encoded = pos_encoding_layer.forward(embedded)
     min_val, max_val = encoded.min(), encoded.max()
     assert np.isfinite(min_val) and np.isfinite(max_val)
-    assert min_val < max_val  # Sanity check for values
+    # Sanity check for values
+    assert min_val < max_val
