@@ -307,3 +307,47 @@ def test_decoderblock_invalid_dropout(
     )
     with pytest.raises(ValueError, match=error_msg):
         DecoderBlock(sa, ca, ffn, dropout_val, None)
+
+
+def test_decoderblock_handwritten_small_example() -> None:
+    """Handwritten, interpretable test for DecoderBlock with tiny constant input."""
+    d_model = 4
+    n_heads = 2
+    d_ff = 8
+    dropout = 0.0
+    seed = 123  # fixed seed for deterministic layers
+    main_rng = np.random.default_rng(seed)
+    max_seed_val = 2**31 - 1
+    seeds = main_rng.integers(0, max_seed_val, size=4)
+
+    # Dummy inputs
+    x = np.array([[[1, 2, 3, 4], [4, 3, 2, 1]]], dtype=np.float32)  # (1, 2, 4)
+    enc_out = np.array([[[0, 1, 0, 1], [1, 0, 1, 0]]], dtype=np.float32)  # (1, 2, 4)
+
+    # Masks
+    # tgt_mask = np.array([[[[1, 0], [1, 1]]]], dtype=bool)  # shape: (1, 1, 2, 2)
+
+    tgt_mask_base = np.array([[1, 0], [1, 1]], dtype=bool)  # (2, 2)
+    tgt_mask = np.broadcast_to(tgt_mask_base, (1, n_heads, 2, 2))  # (1, 2, 2, 2)
+    src_mask = np.ones((1, n_heads, 2, 2), dtype=bool)  # allow all (1, 2, 2, 2)
+
+    # Construct decoder block with fixed seeds
+    self_attn = MultiHeadAttentionBlock(d_model, n_heads, dropout, seed=int(seeds[0]))
+    cross_attn = MultiHeadAttentionBlock(d_model, n_heads, dropout, seed=int(seeds[1]))
+    ffn = FeedForwardBlock(d_model, d_ff, dropout, seed=int(seeds[2]))
+    decoder_block = DecoderBlock(
+        self_attn, cross_attn, ffn, dropout, seed=int(seeds[3])
+    )
+
+    decoder_block.eval()  # ensure deterministic behavior
+
+    # Forward pass
+    out = decoder_block.forward(x, enc_out, tgt_mask, src_mask)
+
+    # Assertions
+    assert out.shape == x.shape
+    assert not np.isnan(out).any()
+
+    # Optional: print output for manual inspection
+    print("Handwritten DecoderBlock output:")
+    print(np.round(out, 3))
