@@ -23,7 +23,7 @@ class DecoderBlock(BaseLayer):
 
         Parameters:
             self_attention_block (MultiHeadAttentionBlock): The multi-head self-attention block.
-            cross_attention_block  : multi‑head block for encoder–decoder attention
+            cross_attention_block  : multi-head block for encoder-decoder attention
             feed_forward_block (FeedForwardBlock): The feed-forward block.
             dropout (float): Dropout rate.
             seed (Optional[int]): Seed for random number generator.
@@ -80,14 +80,14 @@ class DecoderBlock(BaseLayer):
         ----
         x              : decoder input  (batch, tgt_len, d_model)
         encoder_output : encoder memory (batch, src_len, d_model)
-        tgt_mask       : causal mask for masked self‑attention
-                         (batch, 1, tgt_len, tgt_len)   or broadcast‑compatible
-        src_mask       : padding mask for cross‑attention
-                         (batch, 1, 1, src_len)         or broadcast‑compatible
+        tgt_mask       : causal mask for masked self-attention
+                         (batch, 1, tgt_len, tgt_len)   or broadcast-compatible
+        src_mask       : padding mask for cross-attention
+                         (batch, 1, 1, src_len)         or broadcast-compatible
 
         Returns
         -------
-        ndarray (batch, tgt_len, d_model)
+        ndarray(batch,tgt_len,d_model)
         """
         x = self.residual1(
             x, sublayer=lambda x_: self.self_attention_block(x_, x_, x_, tgt_mask)
@@ -106,8 +106,8 @@ class DecoderBlock(BaseLayer):
 
     def get_parameters(self) -> Dict[str, np.ndarray]:
         """
-        Return *one flat dict* whose keys are prefixed with the sub‑layer name followed by “_”.
-        Sub‑layers that expose no parameters are silently skipped.
+        Return *one flat dict* whose keys are prefixed with the sub-layer name followed by “_”.
+        Sub-layers that expose no parameters are silently skipped.
         """
         params = {}
 
@@ -123,7 +123,7 @@ class DecoderBlock(BaseLayer):
         Load parameters from a *flat* dict created by `get_parameters`.
 
         Each key must start with a recognised prefix; the remainder of the
-        key is forwarded to the corresponding sub‑layer’s `set_parameters`.
+        key is forwarded to the corresponding sub-layer's `set_parameters`.
         """
         if not params:
             raise ValueError("No parameters provided for DecoderBlock.")
@@ -164,13 +164,13 @@ class DecoderBlock(BaseLayer):
             raise ValueError(f"Missing parameters for layers: {missing}")
 
     def train(self) -> None:
-        """Put block and all sub‑modules into training mode."""
+        """Put block and all sub-modules into training mode."""
         super().train()
         for layer in self._layers.values():
             layer.train()
 
     def eval(self) -> None:
-        """Put block and all sub‑modules into eval mode."""
+        """Put block and all sub-modules into eval mode."""
         super().eval()
         for layer in self._layers.values():
             layer.eval()
