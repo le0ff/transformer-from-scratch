@@ -1,5 +1,6 @@
-from typing import Dict
+from typing import Dict, Optional
 
+import numpy as np
 from numpy import ndarray
 
 from src.decoder import Decoder
@@ -136,3 +137,91 @@ class Transformer(BaseLayer):
             params (Dict[str, ndarray]): Dictionary of parameters with their names as keys.
         """
         pass
+
+
+@classmethod
+def build_transformer(
+    cls,
+    src_vocab_size: int,
+    tgt_vocab_size: int,
+    src_seq_len: int,
+    tgt_seq_len: int,
+    d_model: int,
+    n_blocks: int,
+    n_heads: int,
+    dropout_rate: float,
+    d_ff: int,
+    seed: Optional[int],
+) -> Transformer:
+    """
+    Build a transformer model with the given parameters.
+    Args:
+        src_vocab_size (int): Source vocabulary size.
+        tgt_vocab_size (int): Target vocabulary size.
+        src_seq_len (int): Source sequence length.
+        tgt_seq_len (int): Target sequence length.
+        d_model (int): Dimension of the model.
+        n_blocks (int): Number of blocks in the encoder and decoder.
+        n_heads (int): Number of attention heads.
+        d_ff (int): Dimension of the feedforward network.
+    Returns:
+        Transformer: A transformer model.
+    """
+    # Seed for reproducibility
+    main_rng = np.random.default_rng(seed)
+    max_seed_val = 2**31 - 1
+    seeds = main_rng.integers(0, max_seed_val, size=7)
+
+    # Input Embedding
+    src_embedding = InputEmbedding(
+        d_model=d_model, vocab_size=src_vocab_size, seed=int(seeds[0])
+    )
+    tgt_embedding = InputEmbedding(
+        d_model=d_model, vocab_size=tgt_vocab_size, seed=int(seeds[1])
+    )
+    # Positional Encoding
+    src_pos_encoding = PositionalEncoding(
+        d_model=d_model,
+        max_len=src_seq_len,
+        dropout_rate=dropout_rate,
+        seed=int(seeds[2]),
+    )
+    tgt_pos_encoding = PositionalEncoding(
+        d_model=d_model,
+        max_len=tgt_seq_len,
+        dropout_rate=dropout_rate,
+        seed=int(seeds[3]),
+    )
+    # Encoder Blocks
+    encoder = Encoder.from_config(
+        d_model=d_model,
+        n_heads=n_heads,
+        d_ff=d_ff,
+        dropout=dropout_rate,
+        num_blocks=n_blocks,
+        seed=int(seeds[4]),
+    )
+    # Decoder Blocks
+    decoder = Decoder.from_config(
+        d_model=d_model,
+        n_heads=n_heads,
+        d_ff=d_ff,
+        dropout=dropout_rate,
+        num_blocks=n_blocks,
+        seed=int(seeds[5]),
+    )
+    # Projection Layer
+    projection = ProjectionLayer(
+        d_model=d_model, vocab_size=tgt_vocab_size, seed=int(seeds[6])
+    )
+    # Transformer Model
+    transformer = Transformer(
+        encoder=encoder,
+        decoder=decoder,
+        src_embedding=src_embedding,
+        tgt_embedding=tgt_embedding,
+        src_pos_encoding=src_pos_encoding,
+        tgt_pos_encoding=tgt_pos_encoding,
+        projection=projection,
+    )
+    return transformer
