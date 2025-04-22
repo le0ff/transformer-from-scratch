@@ -29,8 +29,8 @@ class LayerNorm(BaseLayer):
         self.normalized_shape = normalized_shape
         self.eps = eps
         # default values for adaptive gain and bias as described in the paper
-        self.gamma = np.ones((normalized_shape,), dtype=np.float32)
-        self.beta = np.zeros((normalized_shape,), dtype=np.float32)
+        self.gamma = np.ones((normalized_shape,))
+        self.beta = np.zeros((normalized_shape,))
 
     def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
         """
@@ -60,7 +60,6 @@ class LayerNorm(BaseLayer):
         self._x_norm = x_norm
         self._mean = mean
         self._std = std
-
         return x_norm
 
     def get_parameters(self) -> Dict[str, np.ndarray]:
