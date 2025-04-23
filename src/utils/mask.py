@@ -11,10 +11,13 @@ def create_src_mask(
     if not mask_keys_only:
         # outer product to create a 2D mask for padding tokens
         mask = np.outer(mask, mask)
+    else:
+        # convert to 1D mask for padding tokens
+        mask = mask[np.newaxis, :]
     # add dimensions for broadcasting
-    mask = mask[np.newaxis, np.newaxis, :]
+    # mask = mask[np.newaxis, np.newaxis, :]
     # broadcast to (batch_size, n_heads, seq_len, seq_len)
-    mask = np.broadcast_to(mask, (1, n_heads, seq_len, seq_len))
+    mask = np.broadcast_to(mask, (n_heads, seq_len, seq_len))
     return mask
 
 
@@ -37,7 +40,7 @@ def create_tgt_mask(
     # combine causal mask and padding mask
     combined_mask = causal_mask * pad_mask_matrix
     # add dimensions for broadcasting
-    mask = combined_mask[np.newaxis, np.newaxis, :, :]
+    # mask = combined_mask[np.newaxis, np.newaxis, :, :]
     # broadcast to (batch_size, n_heads, seq_len, seq_len)
-    mask = np.broadcast_to(mask, (1, n_heads, seq_len, seq_len))
+    mask = np.broadcast_to(combined_mask, (n_heads, seq_len, seq_len))
     return mask

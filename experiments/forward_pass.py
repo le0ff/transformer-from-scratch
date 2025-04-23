@@ -1,61 +1,32 @@
 import numpy as np
-from numpy import ndarray
 
 from src.tokenizer import Tokenizer
 from src.transformer import Transformer
-
-
-def create_src_mask(
-    src_tokens, pad_token_id, n_heads, mask_keys_only: bool = True
-) -> ndarray:
-    seq_len = len(src_tokens)
-    # mask for padding tokens
-    mask = np.array([1 if t != pad_token_id else 0 for t in src_tokens], dtype=np.uint8)
-    if not mask_keys_only:
-        # outer product to create a 2D mask for padding tokens
-        mask = np.outer(mask, mask)
-    # add dimensions for broadcasting
-    mask = mask[np.newaxis, np.newaxis, :]
-    # broadcast to (batch_size, n_heads, seq_len, seq_len)
-    mask = np.broadcast_to(mask, (1, n_heads, seq_len, seq_len))
-    return mask
-
-
-def create_tgt_mask(
-    tgt_tokens, pad_token_id, n_heads, mask_keys_only: bool = True
-) -> ndarray:
-    seq_len = len(tgt_tokens)
-    # lower triangular matrix for causal mask
-    causal_mask = np.tril(np.ones((seq_len, seq_len), dtype=np.uint8))
-    # mask for padding tokens
-    pad_mask = np.array(
-        [1 if t != pad_token_id else 0 for t in tgt_tokens], dtype=np.uint8
-    )
-    if mask_keys_only:
-        pad_mask_matrix = pad_mask[np.newaxis, :]
-    else:
-        # outer product to create a 2D mask for padding tokens
-        pad_mask_matrix = np.outer(pad_mask, pad_mask)
-
-    # combine causal mask and padding mask
-    combined_mask = causal_mask * pad_mask_matrix
-    # add dimensions for broadcasting
-    mask = combined_mask[np.newaxis, np.newaxis, :, :]
-    # broadcast to (batch_size, n_heads, seq_len, seq_len)
-    mask = np.broadcast_to(mask, (1, n_heads, seq_len, seq_len))
-    return mask
-
+from src.utils.mask import create_src_mask, create_tgt_mask
 
 tokenizer = Tokenizer()
 
+# Define input and expected output
 seq_length = 20
 
 input = "apple tree"
 src_tokens = tokenizer.tokenize(input, seq_length=seq_length)
 
 expected_output = tokenizer.detokenize(src_tokens)[::-1]
-print(expected_output)
+tgt_tokens_full = tokenizer.tokenize(expected_output, seq_length=seq_length)
+batch_size = len(expected_output)
 
+# Create a batch of src and tgt tokens
+src_batch = np.tile(src_tokens, (seq_length, 1))
+tgt_batch = []
+for i in range(1, seq_length + 1):
+    # reveal up to i tokens, pad the rest
+    tgt_row = tgt_tokens_full[:i] + [tokenizer.get_pad_token_id()] * (seq_length - i)
+    tgt_batch.append(tgt_row)
+tgt_batch = np.array(tgt_batch, dtype=np.int32)
+
+
+# Define the Transformer parameters
 src_vocab_size = tokenizer.vocab_size()
 tgt_vocab_size = tokenizer.vocab_size()
 src_seq_len = seq_length
@@ -67,6 +38,7 @@ dropout_rate = 0.1
 d_ff = 2048
 seed = 42
 
+# Build the Transformer model
 transformer = Transformer.build_transformer(
     src_vocab_size,
     tgt_vocab_size,
@@ -80,35 +52,29 @@ transformer = Transformer.build_transformer(
     seed,
 )
 
-tgt_tokens = tokenizer.tokenize(expected_output, seq_length=seq_length)
-src_mask = create_src_mask(src_tokens, tokenizer.get_pad_token_id(), n_heads)
-tgt_mask = create_tgt_mask(tgt_tokens, tokenizer.get_pad_token_id(), n_heads)
+# Create masks
+src_masks = np.stack(
+    [
+        create_src_mask(src_batch[i], tokenizer.get_pad_token_id(), n_heads)
+        for i in range(seq_length)
+    ],
+    axis=0,
+)
+tgt_masks = np.stack(
+    [
+        create_tgt_mask(tgt_batch[i], tokenizer.get_pad_token_id(), n_heads)
+        for i in range(seq_length)
+    ],
+    axis=0,
+)
 
 
-src_tokens = np.array(src_tokens, dtype=np.int32)[np.newaxis, :]
-tgt_tokens = np.array(tgt_tokens, dtype=np.int32)[np.newaxis, :]
+# print masks
+# print(src_masks[-1][-1])
+# print("---")
+# print(tgt_masks[-1][-1])
 
-print(src_mask[0][0])
-print("---")
-print(tgt_mask[0][0])
+output = transformer(src_batch, tgt_batch, src_masks, tgt_masks)
 
-# for i in range(len(expected_output)):
-#     tgt_input = expected_output[:i]
-#     tgt_tokens = tokenizer.tokenize(tgt_input, seq_length=seq_length)
-#     print(tgt_tokens)
-
-# tgt_tokens: ndarray
-# src_mask: ndarray
-# tgt_mask: ndarray
-
-
-# output = transformer(src_tokens, tgt_tokens, src_mask, tgt_mask)
-
-# print(output)
-# print(np.argmax(output, axis=-1))
-# for i in range(len(np.argmax(output, axis=-1)[0])):
-#     id = np.argmax(output, axis=-1)[0][i]
-#     print(f"ID: {id}, TOKEN: {tokenizer.id_to_char[id]}")
-
-
-# print(tokenizer.detokenize(np.argmax(output, axis=-1)[0]))
+# Print the output shape
+print("Output shape:", output.shape)
