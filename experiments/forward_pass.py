@@ -14,7 +14,6 @@ src_tokens = tokenizer.tokenize(input, seq_length=seq_length)
 
 expected_output = tokenizer.detokenize(src_tokens)[::-1]
 tgt_tokens_full = tokenizer.tokenize(expected_output, seq_length=seq_length)
-batch_size = len(expected_output)
 
 # Create a batch of src and tgt tokens
 src_batch = np.tile(src_tokens, (seq_length, 1))
