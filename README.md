@@ -43,7 +43,71 @@ TODO: ADD SECTION ON IMPLEMENTED COMPONENTS
 
 The project follows a standard structure:
 
-TODO: ADD PROJECT STRUCTURE
+```
+transformer-from-scratch/
+│
+├── experiments/              # Scripts for running experiments, demos, or exploration
+│   ├── explore_forward.ipynb # Jupyter notebook for exploring the forward pass
+│   └── forward_pass.py       
+│
+├── src/                      # Source code for the Transformer implementation
+│   ├── layers/               # Core building blocks (layers) of the Transformer
+│   │   ├── activations/      # Activation functions (e.g., ReLU, Softmax)
+│   │   │   ├── __init__.py
+│   │   │   ├── relu.py
+│   │   │   └── softmax.py
+│   │   ├── embeddings/       # Embedding layers (Input, Positional)
+│   │   │   ├── __init__.py
+│   │   │   ├── input_embedding.py
+│   │   │   └── positional_encoding.py
+│   │   ├── utils/            # Utility functions, e.g., for creating masks
+│   │   │   ├── __init__.py
+│   │   │   └── mask.py
+│   │   ├── __init__.py       
+│   │   ├── base.py           # Abstract Base Layer class for all components
+│   │   ├── decoderblock.py   # Single block for the Decoder stack
+│   │   ├── dropout.py        # Dropout layer
+│   │   ├── encoderblock.py   # Single block for the Encoder stack
+│   │   ├── feedforward.py    # Position-wise Feed-Forward Network layer
+│   │   ├── linear.py         # Linear (Dense) layer
+│   │   ├── multiheadattentionblock.py # Multi-Head Attention mechanism
+│   │   ├── normalization.py  # Layer Normalization
+│   │   ├── projection.py     # Final Linear projection layer (after Decoder)
+│   │   └── residual.py       # Residual connection logic
+│   │
+│   ├── __init__.py           
+│   ├── decoder.py            # The complete Decoder stack (multiple DecoderBlocks)
+│   ├── encoder.py            # The complete Encoder stack (multiple EncoderBlocks)
+│   ├── tokenizer.py          # Simple character-level tokenizer
+│   └── transformer.py        # Main Transformer class assembling Encoder and Decoder
+│
+├── tests/                    # Unit tests for individual components
+│   ├── layers/               # Tests mirroring the src/layers structure
+│   │   ├── activations/      # Tests for activation functions
+│   │   ├── embeddings/       # Tests for embedding layers
+│   │   ├── __init__.py
+│   │   ├── test_decoder_block.py
+│   │   ├── test_dropout.py
+│   │   ├── test_encoder_block.py
+│   │   ├── test_feedforward.py
+│   │   ├── test_linear.py
+│   │   ├── test_multiheadattentionblock.py
+│   │   ├── test_normalization.py
+│   │   ├── test_projection.py
+│   │   └── test_residual.py
+│   │
+│   ├── __init__.py           
+│   ├── test_decoder.py
+│   ├── test_encoder.py
+│   ├── test_tokenizer.py
+│   └── test_transformer.py   
+│
+├── .gitignore                
+├── .python-version           # Specifies Python version (can be used via `uv python install`)
+├── pyproject.toml            # Project metadata, build system, dependencies (`uv sync`)
+├── README.md                 # Project documentation (you are reading this)
+└── uv.lock                   # Lock file for dependencies (if using uv)
+```
 
 ## Setup & Installation
 
