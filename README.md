@@ -11,7 +11,7 @@ A NumPy-only implementation of the Transformer architecture ("Attention Is All Y
 * [Setup & Installation](#setup--installation)
 * [Usage](#usage)
     * [Running Tests](#running-tests)
-    * [Example: Forward Pass](#example-forward-pass)
+    * [Forward Pass](#forward-pass)
 * [Current Status & Limitations](#current-status--limitations)
 * [Future Work](#future-work)
 * [References](#references)
@@ -35,9 +35,33 @@ We adopted a modular design approach:
 
 ## Implemented Components
 
-The following core components of the Transformer architecture have been implemented (primarily focusing on the forward pass using NumPy):
+The following core components of the Transformer architecture have been implemented from scratch using NumPy (primarily focusing on the forward pass):
 
-TODO: ADD SECTION ON IMPLEMENTED COMPONENTS
+- **Activation Functions:**  
+  - ReLU, Softmax
+
+- **Embedding Layers:**  
+  - Input Embedding, Positional Encoding
+
+- **Core Layers:**  
+  - Linear (fully connected), Dropout, Layer Normalization, Residual Connection
+
+- **Attention Mechanism:**  
+  - Multi-Head Attention Block
+
+- **Feed-Forward Network:**  
+  - Position-wise Feed-Forward Block
+
+- **Model Blocks:**  
+  - Encoder Block, Decoder Block (stacked to form Encoder and Decoder modules)
+
+- **Tokenizer:**  
+  - Simple character-level tokenizer for sequence tasks
+
+- **Main Model:**  
+  - Assembled Transformer class combining all components
+
+All components are implemented as modular, extensible classes, following a unified interface via a custom abstract base class `BaseLayer`.
 
 ## Project Structure
 
