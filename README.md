@@ -77,7 +77,19 @@ uv run -m pytest tests/layers/test_feedforward.py
 
 ### Forward Pass
 
-TODO: ADD INSTRUCTIONS ON HOW TO RUN FORWARD PASS
+While the Transformer has not yet been trained, we have fully implemented and verified the forward pass. In our examples, we use a string as input and expect its inverse as output, processed as a batch using teacher forcing. With randomly initialized weights, the output is not semantically meaningful yet, but the pipeline and shapes are correct.
+
+You can explore the forward pass in two ways:
+
+- **Interactive Exploration:**  
+  Open `experiments/explore_forward.ipynb` and execute the cells to see how the forward pass works, inspect tokens, batches and masks, and observe tensor shapes.
+
+- **Script Execution:**  
+  Run the following command to execute the forward pass via script (note: output is minimal and intended for verification):
+  ```bash
+  uv run -m experiments.forward_pass
+  ```
+
 
 ## Current Status & Limitations
 
