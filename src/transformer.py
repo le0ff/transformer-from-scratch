@@ -216,7 +216,12 @@ class Transformer(BaseLayer):
         Returns:
             Dict[str, ndarray]: Dictionary of parameters with their names as keys.
         """
-        pass
+        params = {}
+        for name, layer in self._layers.items():
+            layer_params = layer.get_parameters()
+            for key, value in layer_params.items():
+                params[f"{name}_{key}"] = value
+        return params
 
     def set_parameters(self, params: Dict[str, ndarray]) -> None:
         """
@@ -225,4 +230,31 @@ class Transformer(BaseLayer):
         Parameters:
             params (Dict[str, ndarray]): Dictionary of parameters with their names as keys.
         """
-        pass
+        if not params:
+            raise ValueError("No parameters provided for Transformer.")
+
+        # Prepare dicts for each sublayer
+        sublayer_param_dicts = {name: {} for name in self._layers}
+        processed_keys = set()
+
+        for key, value in params.items():
+            matched = False
+            for sublayer in self._layers:
+                prefix = f"{sublayer}_"
+                if key.startswith(prefix):
+                    sublayer_param_dicts[sublayer][key[len(prefix) :]] = value
+                    processed_keys.add(key)
+                    matched = True
+                    break
+            if not matched:
+                raise ValueError(f"Unexpected parameter key for Transformer: {key}")
+
+        # Set parameters for each sublayer
+        for sublayer, sub_params in sublayer_param_dicts.items():
+            if sub_params:
+                self._layers[sublayer].set_parameters(sub_params)
+
+        # Check for missing keys
+        if len(processed_keys) != len(params):
+            missing = set(params.keys()) - processed_keys
+            raise ValueError(f"Some parameters were not processed: {missing}")
