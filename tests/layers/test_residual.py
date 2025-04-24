@@ -69,7 +69,7 @@ def test_residual_forward(
     assert output.shape == x.shape, (
         f"Expected output shape {x.shape}, got {output.shape}"
     )
-    assert isinstance(output, np.ndarray)
+    assert isinstance(output, ndarray)
 
 
 def test_residual_forward_with_invalid_shape(

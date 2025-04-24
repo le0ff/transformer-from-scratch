@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from numpy import ndarray
 from numpy.testing import assert_allclose, assert_array_equal
 
 from src.layers.embeddings.input_embedding import InputEmbedding
@@ -21,19 +22,17 @@ def embedding_layer(d_model: int, vocab_size: int) -> InputEmbedding:
 
 
 @pytest.fixture
-def token_input() -> np.ndarray:
+def token_input() -> ndarray:
     # shape (2, 3)
     return np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
 
 
-def test_forward_output_shape(embedding_layer: InputEmbedding, token_input: np.ndarray):
+def test_forward_output_shape(embedding_layer: InputEmbedding, token_input: ndarray):
     out = embedding_layer.forward(token_input)
     assert out.shape == (2, 3, embedding_layer.d_model)
 
 
-def test_forward_output_scaled(
-    embedding_layer: InputEmbedding, token_input: np.ndarray
-):
+def test_forward_output_scaled(embedding_layer: InputEmbedding, token_input: ndarray):
     out = embedding_layer.forward(token_input)
     raw = embedding_layer.W_embed[token_input]
     expected = raw * np.sqrt(embedding_layer.d_model)
@@ -86,7 +85,7 @@ def test_set_parameters_invalid(embedding_layer: InputEmbedding, params, err_msg
         embedding_layer.set_parameters(params)
 
 
-def test_forward_caches_input(embedding_layer: InputEmbedding, token_input: np.ndarray):
+def test_forward_caches_input(embedding_layer: InputEmbedding, token_input: ndarray):
     embedding_layer.forward(token_input)
     assert hasattr(embedding_layer, "_input_cache")
     assert_array_equal(embedding_layer._input_cache, token_input)
