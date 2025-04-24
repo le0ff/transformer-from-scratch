@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
 import numpy as np
+from numpy import ndarray
 
 from src.layers.base import BaseLayer
 
@@ -18,7 +19,15 @@ class InputEmbedding(BaseLayer):
         d_model: int,
         vocab_size: int,
         seed: Optional[int] = None,
-    ):
+    ) -> None:
+        """
+        Initialize the embedding layer with scaled random weights.
+
+        Parameters:
+            d_model (int): The dimensionality of the embeddings.
+            vocab_size (int): The number of tokens in the vocabulary.
+            seed (Optional[int]): Optional random seed for reproducibility.
+        """
         super().__init__()
         self.d_model = d_model
         self.vocab_size = vocab_size
@@ -37,20 +46,20 @@ class InputEmbedding(BaseLayer):
         self.scale = np.sqrt(np.float32(d_model))
         self._input_cache = None
 
-    def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
+    def forward(self, x: ndarray, **kwargs: Any) -> ndarray:
         """
         Look up token embeddings and apply √d_model scaling.
 
         Parameters
         ----------
-        x : np.ndarray
-            Integer token‑ID matrix of shape (batch_size, seq_len).
+        x : ndarray
+            Integer token-ID matrix of shape (batch_size, seq_len).
 
         Returns
         -------
-        np.ndarray
+        ndarray
             Embedded tokens of shape (batch_size, seq_len, d_model),
-            multiplied by √d_model as described in *Attention Is All You Need
+            multiplied by √d_model as described in Attention Is All You Need
             3.4 Embedding and Softmax
         """
         if x.ndim != 2:
@@ -80,12 +89,12 @@ class InputEmbedding(BaseLayer):
 
         return scaled_token_embeds
 
-    # def backward(self, d_out: np.ndarray):
+    # def backward(self, d_out: ndarray):
     #     """
     #     Backpropagate gradients through the embedding layer.
 
     #     Args:
-    #         d_out (np.ndarray): Gradient of loss w.r.t. output (batch, seq_len, d_model)
+    #         d_out (ndarray): Gradient of loss w.r.t. output (batch, seq_len, d_model)
     #     """
     #     batch_size, seq_len = self._input_cache.shape
     #     for b in range(batch_size):
@@ -93,16 +102,16 @@ class InputEmbedding(BaseLayer):
     #             token_id = self._input_cache[b, t]
     #             self.embedding_grad[token_id] += d_out[b, t]
 
-    # def backward2(self, grad_output: np.ndarray) -> Dict[str, np.ndarray]:
+    # def backward2(self, grad_output: ndarray) -> Dict[str, ndarray]:
     #     """
     #     Computes the gradient of the loss with respect to the embedding matrix.
 
     #     Args:
-    #         grad_output (np.ndarray): Gradient of the loss with respect to the output
+    #         grad_output (ndarray): Gradient of the loss with respect to the output
     #                                   of this layer. Shape: (batch_size, seq_len, d_model)
 
     #     Returns:
-    #         Dict[str, np.ndarray]: Dictionary containing gradients for parameters.
+    #         Dict[str, ndarray]: Dictionary containing gradients for parameters.
     #                                {'W_embed': gradient_wrt_W_embed}
     #     """
     #     if not hasattr(self, "_input_cache"):
@@ -118,13 +127,13 @@ class InputEmbedding(BaseLayer):
 
     #     return {"W_embed": dL_dW_embed}
 
-    def get_parameters(self) -> Dict[str, np.ndarray]:
+    def get_parameters(self) -> Dict[str, ndarray]:
         """
         Returns the learnable parameters of the layer (the embedding matrix).
         """
         return {"W_embed": self.W_embed}
 
-    def set_parameters(self, params: Dict[str, np.ndarray]):
+    def set_parameters(self, params: Dict[str, ndarray]) -> None:
         """
         Set the learnable parameters of the layer (the embedding matrix).
         """

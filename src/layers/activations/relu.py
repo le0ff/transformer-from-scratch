@@ -1,6 +1,7 @@
 from typing import Any
 
 import numpy as np
+from numpy import ndarray
 
 from src.layers.base import BaseLayer
 
@@ -19,30 +20,30 @@ class ReLU(BaseLayer):
         super().__init__()
         self._input_cache = None
 
-    def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
+    def forward(self, x: ndarray, **kwargs: Any) -> ndarray:
         """
         Forward pass through the ReLU layer.
 
         Parameters:
-            x (np.ndarray): Input data.
+            x (ndarray): Input data.
             **kwargs (Any): Additional keyword arguments.
 
         Returns:
-            np.ndarray: Output data after applying ReLU activation.
+            ndarray: Output data after applying ReLU activation.
         """
         # store input for backward pass
         self._input_cache = x
         return np.maximum(0, x)
 
-    # def backward(self, grad_output: np.ndarray) -> np.ndarray:
+    # def backward(self, grad_output: ndarray) -> ndarray:
     #     """
     #     Backward pass through the ReLU layer.
 
     #     Parameters:
-    #         grad_output (np.ndarray): Gradient of the loss with respect to the output.
+    #         grad_output (ndarray): Gradient of the loss with respect to the output.
 
     #     Returns:
-    #         np.ndarray: Gradient of the loss with respect to the input.
+    #         ndarray: Gradient of the loss with respect to the input.
     #     """
     #     if self._input_cache is None:
     #         raise ValueError("No input cache found. Forward pass must be called first.")
