@@ -44,13 +44,13 @@ class InputEmbedding(BaseLayer):
         Parameters
         ----------
         x : np.ndarray
-            Integer token‑ID matrix of shape **(batch_size, seq_len)**.
+            Integer token‑ID matrix of shape (batch_size, seq_len).
 
         Returns
         -------
         np.ndarray
-            Embedded tokens of shape **(batch_size, seq_len, d_model)**,
-            multiplied by √d_model as described in *Attention Is All You Need*
+            Embedded tokens of shape (batch_size, seq_len, d_model),
+            multiplied by √d_model as described in *Attention Is All You Need
             3.4 Embedding and Softmax
         """
         if x.ndim != 2:
