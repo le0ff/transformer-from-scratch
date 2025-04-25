@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 import numpy as np
 import pytest
 from numpy import ndarray
@@ -27,19 +29,23 @@ def token_input() -> ndarray:
     return np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
 
 
-def test_forward_output_shape(embedding_layer: InputEmbedding, token_input: ndarray):
+def test_forward_output_shape(
+    embedding_layer: InputEmbedding, token_input: ndarray
+) -> None:
     out = embedding_layer.forward(token_input)
     assert out.shape == (2, 3, embedding_layer.d_model)
 
 
-def test_forward_output_scaled(embedding_layer: InputEmbedding, token_input: ndarray):
+def test_forward_output_scaled(
+    embedding_layer: InputEmbedding, token_input: ndarray
+) -> None:
     out = embedding_layer.forward(token_input)
     raw = embedding_layer.W_embed[token_input]
     expected = raw * np.sqrt(embedding_layer.d_model)
     assert_allclose(out, expected, atol=1e-6)
 
 
-def test_get_parameters(embedding_layer: InputEmbedding):
+def test_get_parameters(embedding_layer: InputEmbedding) -> None:
     params = embedding_layer.get_parameters()
     assert "W_embed" in params
     assert params["W_embed"].shape == (
@@ -49,7 +55,7 @@ def test_get_parameters(embedding_layer: InputEmbedding):
     assert_array_equal(params["W_embed"], embedding_layer.W_embed)
 
 
-def test_set_parameters_valid(embedding_layer: InputEmbedding):
+def test_set_parameters_valid(embedding_layer: InputEmbedding) -> None:
     new_weights = np.ones(
         (embedding_layer.vocab_size, embedding_layer.d_model), dtype=np.float32
     )
@@ -67,7 +73,9 @@ def test_set_parameters_valid(embedding_layer: InputEmbedding):
     ],
     ids=["bad_shape", "non_integer_input", "token_id_too_high", "token_id_negative"],
 )
-def test_forward_invalid_inputs(embedding_layer: InputEmbedding, x, err_msg):
+def test_forward_invalid_inputs(
+    embedding_layer: InputEmbedding, x: ndarray, err_msg
+) -> None:
     with pytest.raises(ValueError, match=err_msg):
         embedding_layer.forward(x)
 
@@ -80,7 +88,9 @@ def test_forward_invalid_inputs(embedding_layer: InputEmbedding, x, err_msg):
     ],
     ids=["missing_param", "wrong_shape"],
 )
-def test_set_parameters_invalid(embedding_layer: InputEmbedding, params, err_msg):
+def test_set_parameters_invalid(
+    embedding_layer: InputEmbedding, params: Dict[str, Any], err_msg
+):
     with pytest.raises(ValueError, match=err_msg):
         embedding_layer.set_parameters(params)
 
