@@ -28,7 +28,7 @@ The initial objective was to build a character-level Transformer capable of lear
 We adopted a modular design approach:
 
 1.  **NumPy Exclusivity (Initial Focus):** All mathematical operations and tensor manipulations are handled purely by NumPy. This was a deliberate choice to focus on the fundamental algorithms without framework abstractions.
-2.  **Modular Components:** The Transformer architecture is broken down into its fundamental building blocks (e.g., Multi-Head Attention, Feed-Forward Blocks, InputEmbeddings, Positional Encoding, ...).
+2.  **Modular Components:** The Transformer architecture is broken down into its fundamental building blocks (e.g., Multi-Head Attention, Feed-Forward Blocks, Input Embedding, Positional Encoding, ...).
 3.  **Base Layer:** A `BaseLayer` class (`src/layers/base.py`) was created, serving as an abstract parent class for all components. Each specific layer (e.g., `Linear`, `Softmax`, `MultiHeadAttentionBlock`) inherits from this base, ensuring a consistent interface, so all layers have or override methods such as `forward`, `get_parameters`, `set_parameters`, toggles for `train`/`eval` and a planned `backward`.
 4.  **Character-Level Focus:** The intended application was simplified to character-level tasks to manage complexity.
 5.  **Consideration of JAX:** While sticking to NumPy for the initial implementation, we acknowledged its potential performance limitations, especially for larger models or datasets. We considered using [JAX](https://github.com/google/jax) as a potential alternative. JAX offers a NumPy-like API but includes benefits like Just-In-Time (JIT) compilation for significant speedups on accelerators (GPUs/TPUs) and powerful automatic differentiation capabilities (`jax.grad`). However, to maximize focus on the manual implementation details first, we deferred a potential JAX integration, and instead focused on the modular NumPy-only implementation.
@@ -184,10 +184,10 @@ You can explore the forward pass in two ways:
 **Project Deadline:** April 25th, 5:00 PM CET
 
 As of the current state, the project has achieved the following:
-- **Modular Implementation:** Core Transformer layers are implemented as distinct modules inheriting from a abstract base class `BaseLayer`.
+- **Modular Implementation:** Core Transformer layers are implemented as distinct modules inheriting from an abstract base class `BaseLayer`.
 - **NumPy Core:** All computations and formulas are implemented  solely using NumPy.
 - **Random Initialization & Reproducibility:** All components that require randomness use independent NumPy random number generators. If a seed is provided, initialization and all stochastic operations are fully reproducible: subcomponents deterministically derive their own seeds from the main seed, ensuring independent but repeatable results. If no seed is given, initialization is random. This approach avoids global side effects from `np.random.seed()` and ensures reproducibility without interfering with other code.
-- **Functional Forward Pass:** The primary focus has been on ensuring the forward pass of the implemented layers and the overall Transformer architecture works correctly (i.e., produces outputs of the expected shapes and types), while gaining deep understanding of the Transformer architecture, grasp what the single components do under the hood, and how they work together, as a full pipeline.
+- **Functional Forward Pass:** The primary focus has been on ensuring that the forward pass of the implemented layers and the overall Transformer architecture works correctly — that is, producing outputs of the expected shapes and types. At the same time, the goal has been to gain a deep understanding of the Transformer architecture, including what each component does under the hood and how they work together as a complete pipeline.
 - **Unit Tests:** Tests for initialization and functionality of several components are available.
 
 ### Limitations:
