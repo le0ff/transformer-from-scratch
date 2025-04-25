@@ -123,7 +123,7 @@ def test_projection_set_parameters_valid(proj_layer: ProjectionLayer) -> None:
 )
 def test_projection_set_parameters_invalid(
     proj_layer: ProjectionLayer, params, error_type, error_msg
-):
+) -> None:
     with pytest.raises(error_type, match=error_msg):
         proj_layer.set_parameters(params)
 

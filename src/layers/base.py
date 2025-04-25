@@ -7,7 +7,7 @@ from numpy import ndarray
 class BaseLayer(ABC):
     """Abstract base class for all layers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.training = True
 
     def train(self) -> None:

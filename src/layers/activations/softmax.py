@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import ndarray
 
 from src.layers.base import BaseLayer
 
@@ -21,16 +22,16 @@ class Softmax(BaseLayer):
         self._input_cache = None
         self._mask_cache = None
 
-    def forward(self, x: np.ndarray, causal_mask: np.ndarray = None) -> np.ndarray:
+    def forward(self, x: ndarray, causal_mask: ndarray = None) -> ndarray:
         """
         Apply the softmax function to the input array.
 
         Parameters:
-        x (np.ndarray): Input data (logits).
-        causal_mask (np.ndarray): Mask to apply to the input data.
+        x (ndarray): Input data (logits).
+        causal_mask (ndarray): Mask to apply to the input data.
 
         Returns:
-        np.ndarray: Softmax probabilities.
+        ndarray: Softmax probabilities.
         """
         self._input_cache = x
 
@@ -47,18 +48,18 @@ class Softmax(BaseLayer):
         sum_e_x = np.sum(e_x, axis=self.axis, keepdims=True)
         return e_x / sum_e_x
 
-    def __call__(self, x: np.ndarray, causal_mask: np.ndarray = None) -> np.ndarray:
+    def __call__(self, x: ndarray, causal_mask: ndarray = None) -> ndarray:
         return self.forward(x, causal_mask)
 
-    # def backward(self, grad_output: np.ndarray) -> np.ndarray:
+    # def backward(self, grad_output: ndarray) -> ndarray:
     # """
     # Backward pass of softmax.
 
     # Args:
-    #     grad_output (np.ndarray): Gradient of the loss with respect to the output.
+    #     grad_output (ndarray): Gradient of the loss with respect to the output.
 
     # Returns:
-    #     np.ndarray: Gradient w.r.t input logits.
+    #     ndarray: Gradient w.r.t input logits.
     # """
     # x = self._input_cache
     # mask = self._mask_cache

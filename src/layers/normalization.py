@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 import numpy as np
+from numpy import ndarray
 
 from src.layers.base import BaseLayer
 
@@ -32,7 +33,7 @@ class LayerNorm(BaseLayer):
         self.gamma = np.ones((normalized_shape,))
         self.beta = np.zeros((normalized_shape,))
 
-    def forward(self, x: np.ndarray, **kwargs: Any) -> np.ndarray:
+    def forward(self, x: ndarray, **kwargs: Any) -> ndarray:
         """
         Apply layer normalization to the input.
 
@@ -40,7 +41,7 @@ class LayerNorm(BaseLayer):
             x (np.ndarray): Input data of shape (..., normalized_shape).
 
         Returns:
-            np.ndarray: Normalized output.
+            ndarray: Normalized output.
         """
         # Check if last axis dim is equal to normalized_shape
         if x.shape[-1] != self.normalized_shape:
@@ -62,18 +63,18 @@ class LayerNorm(BaseLayer):
         self._std = std
         return x_norm
 
-    def get_parameters(self) -> Dict[str, np.ndarray]:
+    def get_parameters(self) -> Dict[str, ndarray]:
         """
         Get the parameters of the layer.
 
         Returns:
-            Dict[str, np.ndarray]: Dictionary containing gamma and beta.
+            Dict[str, ndarray]: Dictionary containing gamma and beta.
         """
         params = {"gamma": self.gamma, "beta": self.beta}
 
         return params
 
-    def set_parameters(self, params: Dict[str, np.ndarray]):
+    def set_parameters(self, params: Dict[str, ndarray]):
         """
         Set the parameters for the normalization layer
 
@@ -102,7 +103,7 @@ class LayerNorm(BaseLayer):
         else:
             raise ValueError("Bias parameter 'beta' missing in params dictionary.")
 
-    # def backward(self, grad_output: np.ndarray) -> np.ndarray:
+    # def backward(self, grad_output: ndarray) -> ndarray:
     #     """
     #     Backward pass for LayerNorm.
 
@@ -110,7 +111,7 @@ class LayerNorm(BaseLayer):
     #         grad_output (np.ndarray): Gradient of the loss w.r.t. the output.
 
     #     Returns:
-    #         np.ndarray: Gradient of the loss w.r.t. the input.
+    #         ndarray: Gradient of the loss w.r.t. the input.
     #     """
     #     x = self._x
     #     x_norm = self._x_norm

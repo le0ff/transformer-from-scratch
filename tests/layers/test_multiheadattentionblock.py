@@ -123,7 +123,7 @@ def test_output_shape(
     output = multihead_attention_block(
         sample_input_3d, sample_input_3d, sample_input_3d, sample_causal_mask
     )
-    assert isinstance(output, np.ndarray), "Output is not a numpy array."
+    assert isinstance(output, ndarray), "Output is not a numpy array."
     assert output.shape == sample_input_3d.shape, (
         "Output shape does not match input shape."
     )

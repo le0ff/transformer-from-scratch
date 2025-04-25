@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 import numpy as np
 import pytest
 from numpy import ndarray
@@ -42,18 +44,22 @@ def layer_norm(norm_shape: int) -> LayerNorm:
 
 
 @pytest.fixture
-def sample_input_fixture(request):
+def sample_input_fixture(request: pytest.FixtureRequest) -> ndarray:
     """Return whichever sample‑input fixture name the param holds."""
     return request.getfixturevalue(request.param)
 
 
-def test_forward_output_shape_2d(layer_norm: LayerNorm, sample_input_2d: ndarray):
+def test_forward_output_shape_2d(
+    layer_norm: LayerNorm, sample_input_2d: ndarray
+) -> None:
     """Test output shape matches input shape for 2D input."""
     out = layer_norm.forward(sample_input_2d)
     assert out.shape == sample_input_2d.shape
 
 
-def test_forward_output_shape_3d(layer_norm: LayerNorm, sample_input_3d: ndarray):
+def test_forward_output_shape_3d(
+    layer_norm: LayerNorm, sample_input_3d: ndarray
+) -> None:
     """Test output shape matches input shape for 3D input."""
     out = layer_norm.forward(sample_input_3d)
     assert out.shape == sample_input_3d.shape
@@ -75,7 +81,9 @@ def test_forward_output_shape_3d(layer_norm: LayerNorm, sample_input_3d: ndarray
         "3d_uniform_scaled",
     ],
 )
-def test_forward_normalization_mean_std(layer_norm: LayerNorm, sample_input_fixture):
+def test_forward_normalization_mean_std(
+    layer_norm: LayerNorm, sample_input_fixture
+) -> None:
     """
     Output should always have per‑sample mean≈0 and std≈1 on the last axis,
     no matter the dimensionality *or* the original distribution / scale.
@@ -88,7 +96,7 @@ def test_forward_normalization_mean_std(layer_norm: LayerNorm, sample_input_fixt
     assert_allclose(std, 1.0, atol=1e-5)
 
 
-def test_get_parameters(layer_norm: LayerNorm):
+def test_get_parameters(layer_norm: LayerNorm) -> None:
     """Test get_parameters returns gamma and beta with correct shape."""
     params = layer_norm.get_parameters()
     assert "gamma" in params and "beta" in params
@@ -98,7 +106,7 @@ def test_get_parameters(layer_norm: LayerNorm):
     assert_array_equal(params["beta"], np.zeros_like(params["beta"]))
 
 
-def test_set_parameters_valid(layer_norm: LayerNorm):
+def test_set_parameters_valid(layer_norm: LayerNorm) -> None:
     """Test setting parameters works with correct shapes."""
     new_gamma = np.full((layer_norm.normalized_shape,), 2.0, dtype=np.float32)
     new_beta = np.full((layer_norm.normalized_shape,), 3.0, dtype=np.float32)
@@ -124,13 +132,15 @@ def test_set_parameters_valid(layer_norm: LayerNorm):
         "missing_beta",
     ],
 )
-def test_set_parameters_invalid(layer_norm: LayerNorm, invalid_params, error_msg):
+def test_set_parameters_invalid(
+    layer_norm: LayerNorm, invalid_params: Dict[str, Any], error_msg
+):
     """Test that incorrect parameter shapes or missing keys raise errors."""
     with pytest.raises(ValueError, match=error_msg):
         layer_norm.set_parameters(invalid_params)
 
 
-def test_forward_zero_input(layer_norm: LayerNorm, norm_shape: int):
+def test_forward_zero_input(layer_norm: LayerNorm, norm_shape: int) -> None:
     input_data = np.zeros((4, norm_shape), dtype=np.float32)
     output = layer_norm.forward(input_data)
     mean = output.mean(axis=-1)

@@ -104,11 +104,8 @@ class DecoderBlock(BaseLayer):
 
         return x
 
-    def get_parameters(self) -> Dict[str, np.ndarray]:
-        """
-        Return *one flat dict* whose keys are prefixed with the sub-layer name followed by “_”.
-        Sub-layers that expose no parameters are silently skipped.
-        """
+    def get_parameters(self) -> Dict[str, ndarray]:
+        """Get all parameters from sublayers, with unique prefixes."""
         params = {}
 
         for prefix, layer in self._layers.items():
@@ -118,13 +115,8 @@ class DecoderBlock(BaseLayer):
 
         return params
 
-    def set_parameters(self, params: Dict[str, np.ndarray]) -> None:
-        """
-        Load parameters from a *flat* dict created by `get_parameters`.
-
-        Each key must start with a recognised prefix; the remainder of the
-        key is forwarded to the corresponding sub-layer's `set_parameters`.
-        """
+    def set_parameters(self, params: Dict[str, ndarray]) -> None:
+        """Set parameters for all sublayers, expecting unique prefixes."""
         if not params:
             raise ValueError("No parameters provided for DecoderBlock.")
 

@@ -28,7 +28,7 @@ def sample_input_mixed_signs_expected() -> ndarray:
 
 
 @pytest.fixture
-def sample_input_3d() -> np.ndarray:
+def sample_input_3d() -> ndarray:
     """Creates sample 3D input data."""
     # Shape: (batch_size, seq_len, features)
     return np.random.randn(4, 8, 10)
