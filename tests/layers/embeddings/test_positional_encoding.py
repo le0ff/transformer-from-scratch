@@ -34,26 +34,28 @@ def sample_input(d_model: int) -> ndarray:
     return rng.standard_normal((2, 10, d_model)).astype(np.float32)
 
 
-def test_forward_shape(pe_block: PositionalEncoding, sample_input: ndarray):
+def test_forward_shape(pe_block: PositionalEncoding, sample_input: ndarray) -> None:
     """Output shape should == input shape."""
     out = pe_block.forward(sample_input)
     assert out.shape == sample_input.shape
 
 
-def test_forward_adds_encoding(pe_block: PositionalEncoding, sample_input: ndarray):
+def test_forward_adds_encoding(
+    pe_block: PositionalEncoding, sample_input: ndarray
+) -> None:
     """Check that positional encoding is actually added."""
     out = pe_block.forward(sample_input)
     assert not np.allclose(out, sample_input), "Positional encoding should alter input."
 
 
-def test_pe_consistency(pe_block: PositionalEncoding):
+def test_pe_consistency(pe_block: PositionalEncoding) -> None:
     """Same positional encoding is applied each time (deterministic)."""
     pe1 = pe_block.pe.copy()
     pe2 = pe_block.build_pe(pe_block.max_len, pe_block.d_model)
     assert_array_equal(pe1, pe2)
 
 
-def test_encoding_for_known_position(pe_block: PositionalEncoding):
+def test_encoding_for_known_position(pe_block: PositionalEncoding) -> None:
     """Check known sin/cos structure for position 0 (should be sin(0)=0, cos(0)=1)."""
     first_pos = pe_block.pe[0]
     assert_allclose(first_pos[0::2], 0.0, atol=1e-6)
@@ -77,7 +79,7 @@ def test_invalid_params(bad_d_model, bad_max_len, error_msg):
 
 
 @pytest.mark.parametrize("shape", [(2, 10, 16)], ids=["3d"])
-def test_forward_shape_flexible(pe_block: PositionalEncoding, shape):
+def test_forward_shape_flexible(pe_block: PositionalEncoding, shape) -> None:
     dummy_input = np.random.randn(*shape).astype(np.float32)
     out = pe_block.forward(dummy_input)
     assert out.shape == dummy_input.shape
